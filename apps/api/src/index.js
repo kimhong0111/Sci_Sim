@@ -1,4 +1,5 @@
 import express from 'express'
+import simulationRoutes from './routes/simulation.routes.js'
 import cors from 'cors'
 
 const app = express();
@@ -9,7 +10,7 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 
 // Routes
-// app.use("/api/simulations", simulationRoutes);
+ app.use("/api/simulations", simulationRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

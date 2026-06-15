@@ -35,7 +35,7 @@ export default function Home() {
       {error && <p className="error">Error: {error}</p>}
 
       <div className="grid">
-        {simulations.map((s) => (
+        { simulations.map((s) => (
           <SimulationCard key={s.id} simulation={s} onDelete={remove} />
         ))}
       </div>

@@ -1,5 +1,6 @@
 import express from 'express'
 import simulationRoutes from './routes/simulation.routes.js'
+import { Topic } from './models/Topic.js';
 import cors from 'cors'
 
 const app = express();
@@ -25,5 +26,7 @@ app.use((err, req, res, next) => {
 
 // Start server
  app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+
+
   
 

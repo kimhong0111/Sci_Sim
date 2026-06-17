@@ -1,4 +1,5 @@
-import { fetchSimulation, fetchSimulationById} from "../repository/simulation.repo.js";
+import { fetchSimulationAndTransform , fetchSimulationByIdAndTransform} from "../repository/simulation.repo.js";
+
 
 function createResponseMessage(success , message){
     return {
@@ -9,7 +10,8 @@ function createResponseMessage(success , message){
 
 export async function getAllSimulation(req, res) {
   try {
-    const data = await fetchSimulation();
+    const data = await fetchSimulationAndTransform();
+
 
     if (!fetchFailed(data)) {
       return res.status(404).json(createResponseMessage(false,"No Simulation Found"));
@@ -30,7 +32,7 @@ export async function getSimulationById(req,res){
        
      try{
 
-        const data = await fetchSimulationById(id);
+        const data = await fetchSimulationByIdAndTransform(id);
         if(!fetchFailed(data)){
            return res.status(404).json(createResponseMessage(false,"No Simulation Found"));
         }

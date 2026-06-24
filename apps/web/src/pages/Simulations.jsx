@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useSimulations } from "../hooks/useSimulations";
 import SimulationCard from "../components/SimulationCard";
+import { Link } from "react-router-dom";
 
-export default function Home() {
+export default function Simulation() {
   const { simulations, loading, error, create, remove } = useSimulations();
   const [form, setForm] = useState({ name: "", description: "" });
 

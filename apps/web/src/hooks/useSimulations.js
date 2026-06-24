@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { simulationService } from "../services/api";
 
-export function useSimulations() {
+export function useSimulations(id = null) {
   const [simulations, setSimulations] = useState([]);
+  const [simulation, setSimulation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,7 +19,25 @@ export function useSimulations() {
     }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  const fetchById = async (targetId) => {
+    try {
+      setLoading(true);
+      const data = await simulationService.getById(targetId);
+      setSimulation(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchById(id);
+    } else {
+      fetchAll();
+    }
+  }, [id]);
 
   const create = async (data) => {
     const created = await simulationService.create(data);
@@ -31,5 +50,5 @@ export function useSimulations() {
     setSimulations((prev) => prev.filter((s) => s.id !== id));
   };
 
-  return { simulations, loading, error, create, remove, refetch: fetchAll };
+  return { simulations, simulation, loading, error, create, remove, refetch: fetchAll };
 }

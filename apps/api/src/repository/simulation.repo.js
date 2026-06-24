@@ -1,13 +1,46 @@
-import {pool} from '../config/db.js'
+import { Simulation, Subject, Topic, Simulation_Config } from "../models/index.js";
 
+export async function fetchSimulationAndTransform() {
+  const simulations = await Simulation.findAll({
+    include: [
+      { model: Subject, attributes: ["name"] },
+      { model: Topic, attributes: ["name"] },
+      { model: Simulation_Config, attributes: ["parameters"] },
+    ],
+  });
 
-export async function fetchSimulation(){
-    const [rows] = await pool.query('select * from simulations');
-    return rows     
+  if (!simulations || simulations.length === 0) return [];
+  return simulations;
 }
 
-export async function fetchSimulationById(id){
-    const [rows] = await pool.query('select * from simulations where id = ? ',[id])
+export async function fetchSimulationByIdAndTransform(id) {
+  const simulation = await Simulation.findByPk(id, {
+    include: [
+      { model: Subject, attributes: ["name"] },
+      { model: Topic, attributes: ["name"] },
+      { model: Simulation_Config, attributes: ["parameters"] },
+    ],
+  });
 
-    return rows
+  if (!simulation) return null;
+  return simulation;
+}
+
+export async function createSimulation(data) {
+  const simulation = await Simulation.create(data);
+  return simulation;
+}
+
+export async function updateSimulation(id, data) {
+  const simulation = await Simulation.findByPk(id);
+  if (!simulation) return null;
+  await simulation.update(data);
+  return simulation;
+}
+
+export async function deleteSimulation(id) {
+  const simulation = await Simulation.findByPk(id);
+  if (!simulation) return false;
+  await simulation.destroy();
+  return true;
 }

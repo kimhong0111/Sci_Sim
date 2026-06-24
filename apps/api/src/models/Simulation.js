@@ -1,19 +1,31 @@
+import sequelize from "../config/db.js";
+import { DataTypes } from "sequelize";
 
-export class Simulation {
-    id 
-    subject_id
-    topic_id
-    title 
-    description
-    created_at
-    updated_at
+const Simulation = sequelize.define(
+  "Simulation",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    subject_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    topic_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.TEXT,
+    },
+  },
+  { tableName: "simulations", freezeTableName: true, timestamps: false }
+);
 
-    constructor(id,subject_id,topic_id,description,created_at,updated_at){
-        this.id = parseInt(id)
-        this.subject_id = parseInt(subject_id)
-        this.topic_id = parseInt(topic_id)
-        this.description = description
-        this.created_at = created_at
-        this.updated_at = updated_at
-    }
-}
+export default Simulation;

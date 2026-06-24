@@ -1,13 +1,24 @@
-export class Topic {
-   id 
-   subject_id
-   name 
-   created_at 
+import sequelize from "../config/db.js";
+import { DataTypes } from "sequelize";
 
-   constructor(id,subject_id,name,created_at){
-      this.id = parseInt(id)
-      this.subject_id = parseInt(subject_id)
-      this.name = name
-      this.created_at = created_at
-   }
-}
+const Topic = sequelize.define(
+  "Topic",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    subject_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+  },
+  { tableName: "topics", freezeTableName: true, timestamps: false }
+);
+
+export default Topic;

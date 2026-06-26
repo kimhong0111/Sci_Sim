@@ -27,6 +27,7 @@
     "install:all": "npm install"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.1",
     "accepts": "^1.3.8",
     "agent-base": "^6.0.2",
     "ansi-regex": "^5.0.1",
@@ -179,6 +180,7 @@
     "string-width": "^4.2.3",
     "strip-ansi": "^6.0.1",
     "supports-color": "^8.1.1",
+    "tailwindcss": "^4.3.1",
     "to-regex-range": "^5.0.1",
     "toidentifier": "^1.0.1",
     "touch": "^3.1.1",

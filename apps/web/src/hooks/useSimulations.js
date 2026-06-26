@@ -11,6 +11,7 @@ export function useSimulations(id = null) {
     try {
       setLoading(true);
       const data = await simulationService.getAll();
+      console.log(data)
       setSimulations(data);
     } catch (err) {
       setError(err.message);

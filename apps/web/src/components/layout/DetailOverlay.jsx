@@ -17,7 +17,7 @@ export function DetailOverlay({ isOpen, simulation, onClose }) {
   return (
     <div className="detail-overlay" role="dialog" aria-modal="true">
       <div className="detail-overlay__content">
-        <DetailImage onBack={onClose} />
+        <DetailImage simulation={simulation} onBack={onClose} />
         <DetailPanel simulation={simulation} onInitialize={() => {}} />
       </div>
     </div>

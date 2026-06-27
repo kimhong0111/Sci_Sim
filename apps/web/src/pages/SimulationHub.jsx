@@ -18,12 +18,13 @@ export default function SimulationHub() {
 
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeSubFilter, setActiveSubFilter] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedSimulation, setSelectedSimulation] = useState(null);
 
   const gridRef = useRef(null);
 
-  // Computed filtered list using real API's subject_id
+  // Computed filtered list using real API's subject_id and search query
   const filteredSimulations = useMemo(() => {
     return simulations.filter((sim) => {
       const matchesCategory =
@@ -34,9 +35,14 @@ export default function SimulationHub() {
       const matchesTopic =
         !activeSubFilter || sim.Topic?.name === activeSubFilter;
 
-      return matchesCategory && matchesTopic;
+      const matchesSearch =
+        !searchQuery ||
+        sim.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sim.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesCategory && matchesTopic && matchesSearch;
     });
-  }, [simulations, activeFilter, activeSubFilter]);
+  }, [simulations, activeFilter, activeSubFilter, searchQuery]);
 
   // Handlers
   const handleFilterChange = (filter, subFilter = null) => {
@@ -90,6 +96,10 @@ export default function SimulationHub() {
         onBiologyClick={handleBiologyClick}
         activeFilter={activeFilter}
         activeSubFilter={activeSubFilter}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        simulations={simulations}
+        onSimulationSelect={handleSimulationSelect}
       />
 
       <Hero onExploreClick={handleExploreClick} />
@@ -97,12 +107,12 @@ export default function SimulationHub() {
       <div ref={gridRef}>
         {loading && (
           <div className="simulation-hub__status">
-            <p>Loading simulations...</p>
+            <p>⌛ Loading Experimental Data...</p>
           </div>
         )}
         {error && (
           <div className="simulation-hub__status simulation-hub__status--error">
-            <p>Error: {error}</p>
+            <p>⚠ System Error: {error}</p>
           </div>
         )}
         {!loading && !error && (

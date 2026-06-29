@@ -100,9 +100,8 @@ export function Navigation({
 
   return (
     <nav className="navigation">
-      <div className="navigation__logo-section" onClick={scrollToTop}>
-        <span className="navigation__logo">SS</span>
-        <span className="navigation__brand">Science Simulation</span>
+      <div className="navigation__logo-section" onClick={scrollToTop} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+        <img src="/logo.png" alt="Science Simulation Logo" style={{ height: '48px', width: 'auto' }} />
       </div>
 
       {/* Desktop menu (hidden on mobile via CSS) */}

@@ -17,7 +17,9 @@ export function FilterBar({ activeFilter, onFilterChange }) {
     <div className="filter-bar">
       <div className="filter-bar__header">
         <h2 className="filter-bar__title">Available Modules</h2>
-        <span className="filter-bar__active-label">{activeLabel}</span>
+        <p className="filter-bar__active-label">
+          Filter: <span>{activeLabel}</span>
+        </p>
       </div>
       <div className="filter-bar__chips">
         {FILTERS.map((f) => (

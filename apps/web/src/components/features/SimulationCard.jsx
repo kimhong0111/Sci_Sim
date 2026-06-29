@@ -1,21 +1,31 @@
 import React from 'react';
 import { Badge } from '../ui/Badge';
 
-// Maps subject_id to display category name
 const SUBJECT_MAP = {
   1: 'Physics',
   2: 'Chemistry',
   3: 'Biology',
 };
 
+const SUBJECT_KEY = {
+  1: 'physics',
+  2: 'chemistry',
+  3: 'biology',
+};
+
 export function SimulationCard({ simulation, onOpen }) {
   const categoryLabel = SUBJECT_MAP[simulation.subject_id] || simulation.Subject?.name || 'General';
+  const subjectKey = SUBJECT_KEY[simulation.subject_id] || 'general';
   const topicLabel = simulation.Topic?.name || '';
 
   return (
-    <div className="simulation-card" onClick={() => onOpen(simulation)}>
+    <div
+      className="simulation-card"
+      data-subject={subjectKey}
+      onClick={() => onOpen(simulation)}
+    >
       <div className="simulation-card__image-wrapper">
-          <div className="simulation-card__image-placeholder" />
+        <div className="simulation-card__image-placeholder" />
         <Badge label={categoryLabel} variant="category" />
       </div>
       <div className="simulation-card__body">

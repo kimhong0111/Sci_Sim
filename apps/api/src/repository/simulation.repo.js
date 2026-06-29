@@ -8,7 +8,7 @@ export async function fetchSimulationAndTransform() {
       { model: Simulation_Config, attributes: ["parameters"] },
     ],
   });
-
+  console.log(simulations)
   if (!simulations || simulations.length === 0) return [];
   return simulations;
 }

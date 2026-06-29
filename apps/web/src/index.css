@@ -2,82 +2,377 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
+/* ============================================================
+   GLOBAL RESET & BASE
+   ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: system-ui, sans-serif;
   background: #f5f5f5;
   color: #222;
-  padding: 2rem;
 }
 
-.page { max-width: 900px; margin: 0 auto; }
+/* ============================================================
+   LEGACY STYLES (kept for SimView / other existing pages)
+   ============================================================ */
+.page { max-width: 900px; margin: 0 auto; padding: 2rem; }
 h1 { font-size: 2rem; margin-bottom: 1.5rem; }
 
-.form {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-.form input {
-  flex: 1;
-  min-width: 180px;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.95rem;
-}
-.form button {
-  padding: 0.5rem 1.25rem;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
+.form { display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+.form input { flex: 1; min-width: 180px; padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; }
+.form button { padding: 0.5rem 1.25rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
 .form button:hover { background: #1d4ed8; }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1rem;
-}
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
 
-.card {
-  background: white;
-  border-radius: 10px;
-  padding: 1.25rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+.card { background: white; border-radius: 10px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 0.5rem; }
 .card h3 { font-size: 1.1rem; }
 .card p { color: #555; font-size: 0.9rem; }
 
-.params {
-  background: #f0f0f0;
-  border-radius: 6px;
-  padding: 0.5rem;
-  font-size: 0.78rem;
-  overflow-x: auto;
-}
+.params { background: #f0f0f0; border-radius: 6px; padding: 0.5rem; font-size: 0.78rem; overflow-x: auto; }
 
-.btn-danger {
-  margin-top: auto;
-  padding: 0.4rem 0.9rem;
-  background: #dc2626;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  align-self: flex-start;
-}
+.btn-danger { margin-top: auto; padding: 0.4rem 0.9rem; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; align-self: flex-start; }
 .btn-danger:hover { background: #b91c1c; }
 
 .error { color: #dc2626; }
+
+/* ============================================================
+   SIMULATION HUB — PAGE WRAPPER
+   ============================================================ */
+.simulation-hub {
+  @apply min-h-screen bg-white;
+}
+
+.simulation-hub__status {
+  @apply flex justify-center items-center py-20 text-gray-500 text-lg;
+}
+
+.simulation-hub__status--error {
+  @apply text-red-500;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+.navigation {
+  @apply flex justify-between items-center px-6 h-16 border-b-2 border-black sticky top-0 z-50 bg-white;
+}
+
+.navigation__logo-section {
+  @apply flex items-center gap-2 cursor-pointer select-none;
+}
+
+.navigation__logo {
+  @apply text-2xl;
+}
+
+.navigation__brand {
+  @apply font-bold text-lg tracking-tight;
+}
+
+.navigation__menu {
+  @apply hidden md:flex items-center gap-6;
+}
+
+.navigation__search-actions {
+  @apply flex items-center flex-1 max-w-sm ml-6;
+}
+
+.navigation__search {
+  @apply w-full px-4 py-2 border-2 border-black rounded text-sm outline-none focus:border-red-500 transition-colors bg-gray-50;
+}
+
+/* ============================================================
+   NAV DROPDOWN
+   ============================================================ */
+.nav-dropdown {
+  @apply relative;
+}
+
+.nav-dropdown__trigger {
+  @apply flex items-center gap-1 px-2 py-1 text-sm font-medium rounded hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent;
+}
+
+.nav-dropdown--active .nav-dropdown__trigger {
+  @apply text-red-600 font-semibold;
+}
+
+.nav-dropdown__arrow {
+  @apply text-xs;
+}
+
+.nav-dropdown__menu {
+  @apply absolute top-full left-0 mt-1 w-44 bg-white border-2 border-black shadow-lg z-50 list-none opacity-0 invisible transition-all duration-150;
+}
+
+.nav-dropdown:hover .nav-dropdown__menu {
+  @apply opacity-100 visible;
+}
+
+.nav-dropdown__item {
+  @apply border-b border-gray-100 last:border-b-0;
+}
+
+.nav-dropdown__item-btn {
+  @apply w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors border-none bg-transparent cursor-pointer;
+}
+
+/* ============================================================
+   ICON BUTTON
+   ============================================================ */
+.icon-button {
+  @apply flex items-center justify-center w-9 h-9 rounded hover:bg-gray-100 transition-colors border-none bg-transparent cursor-pointer;
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero {
+  @apply flex flex-col items-center text-center px-6 py-20 md:px-16 lg:px-24 border-b-2 border-black bg-white;
+}
+
+.hero__headline {
+  @apply text-5xl md:text-6xl font-black leading-tight mt-4 mb-4;
+}
+
+.hero__accent {
+  @apply text-red-600;
+}
+
+.hero__body {
+  @apply text-gray-600 text-lg max-w-xl mb-8;
+}
+
+/* ============================================================
+   BADGE
+   ============================================================ */
+.badge {
+  @apply inline-block text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded;
+}
+
+.badge--category {
+  @apply bg-black text-white;
+}
+
+.badge--tag {
+  @apply bg-green-100 text-green-800 border border-green-300;
+}
+
+/* ============================================================
+   TAG
+   ============================================================ */
+.tag {
+  @apply inline-block text-xs border border-gray-300 px-2 py-0.5 rounded text-gray-600;
+}
+
+/* ============================================================
+   BUTTON
+   ============================================================ */
+.btn {
+  @apply inline-flex items-center justify-center px-5 py-2.5 font-semibold text-sm rounded cursor-pointer transition-all duration-150 border-2 border-transparent;
+}
+
+.btn--primary {
+  @apply bg-black text-white border-black hover:bg-red-600 hover:border-red-600;
+}
+
+.btn--secondary {
+  @apply bg-white text-black border-black hover:bg-gray-100;
+}
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+.filter-bar {
+  @apply mb-8;
+}
+
+.filter-bar__header {
+  @apply flex justify-between items-baseline mb-4;
+}
+
+.filter-bar__title {
+  @apply text-2xl font-bold;
+}
+
+.filter-bar__active-label {
+  @apply text-sm text-gray-500 uppercase tracking-wider;
+}
+
+.filter-bar__chips {
+  @apply flex gap-2 flex-wrap;
+}
+
+/* ============================================================
+   FILTER CHIP
+   ============================================================ */
+.filter-chip {
+  @apply px-4 py-1.5 text-sm font-semibold border-2 border-black rounded-full cursor-pointer transition-all duration-150;
+  @apply bg-white text-black hover:bg-gray-100;
+}
+
+.filter-chip--active {
+  @apply bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700;
+}
+
+/* ============================================================
+   SIMULATION GRID
+   ============================================================ */
+.simulation-grid {
+  @apply px-6 py-12 md:px-16 lg:px-24;
+}
+
+.simulation-grid__cards {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.simulation-grid__empty {
+  @apply py-16 text-center text-gray-400;
+}
+
+.simulation-grid__load-more {
+  @apply flex justify-center mt-10;
+}
+
+/* ============================================================
+   SIMULATION CARD
+   ============================================================ */
+.simulation-card {
+  @apply bg-white border-2 border-black rounded overflow-hidden cursor-pointer transition-all duration-200;
+  @apply hover:-translate-y-1 hover:shadow-xl;
+}
+
+.simulation-card__image-wrapper {
+  @apply relative;
+}
+
+.simulation-card__image-placeholder {
+  @apply w-full h-44 bg-gray-100 flex items-center justify-center;
+  @apply grayscale hover:grayscale-0 transition-all duration-300;
+}
+
+.simulation-card__icon {
+  @apply text-5xl opacity-30;
+}
+
+.simulation-card__image-wrapper .badge {
+  @apply absolute top-3 left-3;
+}
+
+.simulation-card__body {
+  @apply p-4 flex flex-col gap-2;
+}
+
+.simulation-card__title {
+  @apply font-bold text-base;
+}
+
+.simulation-card__description {
+  @apply text-sm text-gray-500 line-clamp-2;
+}
+
+.simulation-card__tags {
+  @apply flex gap-2 flex-wrap mt-1;
+}
+
+/* ============================================================
+   DETAIL OVERLAY
+   ============================================================ */
+.detail-overlay {
+  @apply fixed inset-0 z-50 bg-white flex;
+}
+
+.detail-overlay__content {
+  @apply flex w-full h-full;
+}
+
+/* ============================================================
+   DETAIL IMAGE
+   ============================================================ */
+.detail-image {
+  @apply relative w-1/2 h-full bg-gray-100 flex items-center justify-center flex-shrink-0;
+}
+
+.detail-image__placeholder {
+  @apply text-9xl opacity-20;
+}
+
+.detail-image__icon {
+  @apply text-9xl;
+}
+
+.detail-image__back {
+  @apply absolute top-6 left-6;
+}
+
+/* ============================================================
+   DETAIL PANEL
+   ============================================================ */
+.detail-panel {
+  @apply flex-1 overflow-y-auto p-10 flex flex-col gap-6 border-l-2 border-black;
+}
+
+.detail-panel__header {
+  @apply flex items-center gap-2 flex-wrap;
+}
+
+.detail-panel__title {
+  @apply text-4xl font-black leading-tight;
+}
+
+.detail-panel__cta {
+  @apply mt-auto pt-4;
+}
+
+/* ============================================================
+   LESSON CARD
+   ============================================================ */
+.lesson-card {
+  @apply border-l-4 border-black bg-gray-50 px-5 py-4 flex flex-col gap-2;
+}
+
+.lesson-card__label {
+  @apply text-xs uppercase tracking-widest font-semibold text-gray-400;
+}
+
+.lesson-card__description {
+  @apply text-gray-700 text-sm leading-relaxed;
+}
+
+/* ============================================================
+   LESSON META
+   ============================================================ */
+.lesson-meta {
+  @apply flex flex-col gap-2;
+}
+
+.lesson-meta__item {
+  @apply flex justify-between items-center border border-gray-200 rounded px-4 py-2.5;
+}
+
+.lesson-meta__key {
+  @apply text-xs uppercase tracking-widest text-gray-400 font-semibold;
+}
+
+.lesson-meta__value {
+  @apply font-semibold text-sm text-black;
+}
+
+/* ParameterBox kept for potential future use but removed from DetailPanel */
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.footer {
+  @apply border-t-2 border-black px-6 py-6 md:px-16;
+}
+
+.footer__content {
+  @apply flex justify-between items-center text-sm text-gray-500;
+}
+
+.footer__brand {
+  @apply font-bold text-black;
+}

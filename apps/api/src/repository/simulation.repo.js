@@ -1,29 +1,33 @@
+import { single } from "rxjs";
 import { Simulation, Subject, Topic, Simulation_Config } from "../models/index.js";
 
 export async function fetchSimulationAndTransform() {
-  const simulations = await Simulation.findAll({
-    include: [
-      { model: Subject, attributes: ["name"] },
-      { model: Topic, attributes: ["name"] },
-      { model: Simulation_Config, attributes: ["parameters"] },
-    ],
-  });
-  console.log(simulations)
-  if (!simulations || simulations.length === 0) return [];
-  return simulations;
+    const simulations = await Simulation.findAll({
+        include: [
+            { model: Subject, attributes: ["name"] },
+            { model: Topic, attributes: ["name"] },
+            { 
+                model: Simulation_Config, 
+                foreignKey: "simulation_id", 
+            },
+        ],
+    });
+    if (!simulations || simulations.length === 0) return [];
+    return simulations;
 }
 
 export async function fetchSimulationByIdAndTransform(id) {
-  const simulation = await Simulation.findByPk(id, {
-    include: [
-      { model: Subject, attributes: ["name"] },
-      { model: Topic, attributes: ["name"] },
-      { model: Simulation_Config, attributes: ["parameters"] },
-    ],
-  });
-
-  if (!simulation) return null;
-  return simulation;
+    return await Simulation.findOne({
+        where: { id },
+        include: [
+            { model: Subject, attributes: ["name"] },
+            { model: Topic, attributes: ["name"] },
+            { 
+                model: Simulation_Config,
+                foreignKey: "simulation_id",  // ← add this
+            },
+        ],
+    });
 }
 
 export async function createSimulation(data) {

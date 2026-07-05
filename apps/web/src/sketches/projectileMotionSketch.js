@@ -27,6 +27,11 @@ export function projectileMotionSketch(p, configRef) {
     const TEXT_COLOR = [180, 200, 220];
     const ACCENT = [80, 220, 200];
 
+     p.setup = () => {
+        p.createCanvas(W, H);
+        p.frameRate(60);
+    };
+
     function resetSim() {
         const { angle, initialVelocity } = configRef.current;
         const rad = (angle * Math.PI) / 180;

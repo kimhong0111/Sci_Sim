@@ -24,59 +24,74 @@ export default function SimView() {
 }, [id]);
 
     if (loading) return (
-        <div style={{ color: "white", padding: "2rem" }}>
-            Loading...
-        </div>
+        <div className="sim-view__status">Loading...</div>
     );
 
     if (error) return (
-        <div style={{ color: "#f88", padding: "2rem" }}>
+        <div className="sim-view__status sim-view__status--error">
             Error: {error}
         </div>
     );
 
     if (!simulation) return (
-        <div style={{ color: "white", padding: "2rem" }}>
-            Simulation not found
-        </div>
+        <div className="sim-view__status">Simulation not found</div>
     );
 
     const sketchFn = sketchRegistry[simulation.id];
     const parameters = simulation.Simulation_Config?.parameters;
 
     return (
-        <div style={{ padding: "2rem", background: "#111", minHeight: "100vh", color: "white" }}>
-            <h2>{simulation.title}</h2>
-            <p style={{ color: "#888", marginBottom: "1rem" }}>{simulation.description}</p>
+        <div className="sim-view">
+            <div className="sim-view__header">
+                <h2 className="sim-view__title">{simulation.title}</h2>
+                <p className="sim-view__desc">{simulation.description}</p>
+            </div>
 
-            {/* sliders — only render if config exists */}
             {parameters && config && (
-                <div style={{ display: "flex", gap: "2rem", marginBottom: "1rem" }}>
-                    {Object.entries(config).map(([key, value]) => (
-          typeof value === "number" && (
-        <label key={key}>
-            {key}: {value}
-            <input
-                type="range"
-                min="0" max="100" step="0.1"
-                value={value}
-                onChange={(e) => setConfig({ ...config, [key]: +e.target.value })}
-                style={{ display: "block" }}
-            />
-          </label>
-    )
-))}
+                <div className="sim-view__controls">
+                    {Object.entries(config).map(([key, value]) => {
+                        if (key === "objectType") {
+                            return (
+                                <label key={key} className="sim-view__field">
+                                    <span className="sim-view__label">Object Type</span>
+                                    <select
+                                        value={value}
+                                        onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
+                                        className="sim-view__select"
+                                    >
+                                        <option value="bowling">Bowling Ball (Heavy)</option>
+                                        <option value="rubber">Rubber Ball (Bouncy)</option>
+                                        <option value="feather">Feather (Light)</option>
+                                    </select>
+                                </label>
+                            );
+                        }
+                        if (typeof value === "number") {
+                            return (
+                                <label key={key} className="sim-view__field">
+                                    <span className="sim-view__label">{key}: {value}</span>
+                                    <input
+                                        type="range"
+                                        min="0" max="100" step="0.1"
+                                        value={value}
+                                        onChange={(e) => setConfig({ ...config, [key]: +e.target.value })}
+                                        className="sim-view__range"
+                                    />
+                                </label>
+                            );
+                        }
+                        return null;
+                    })}
                 </div>
             )}
 
-            {sketchFn && config
-                ? <SimulationCanvas config={config} sketchFn={sketchFn} />
-                : <p style={{ color: "#f88" }}>Sketch coming soon for "{simulation.title}"</p>
-            }
+            <div className="sim-view__canvas-wrapper">
+                {sketchFn && config
+                    ? <SimulationCanvas config={config} sketchFn={sketchFn} />
+                    : <p className="sim-view__missing">Sketch coming soon for "{simulation.title}"</p>
+                }
+            </div>
 
-            <p style={{ marginTop: "0.5rem", color: "#888" }}>
-                Click canvas to reset
-            </p>
         </div>
     );
 }

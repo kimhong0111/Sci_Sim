@@ -1,16 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { NavDropdown } from '../features/NavDropdown';
 
-const SUBJECT_ID_MAP = {
-  physics: 1,
-  chemistry: 2,
-  biology: 3,
-};
-
 export function Navigation({
-  onPhysicsClick,
-  onChemistryClick,
-  onBiologyClick,
+  subjects = [],
+  topicsBySubject = {},
+  onSubjectClick,
   activeFilter,
   searchQuery,
   onSearchChange,
@@ -24,43 +18,24 @@ export function Navigation({
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  const subjects = [
-    {
-      key: 'physics',
-      label: 'Physics',
-      handler: onPhysicsClick,
-      items: [
-        { label: 'Mechanics', topic: 'Mechanics' },
-        { label: 'Thermodynamics', topic: 'Thermodynamics' },
-        { label: 'Electromagnetism', topic: 'Electromagnetism' },
-        { label: 'All Physics', topic: null },
-      ],
-    },
-    {
-      key: 'chemistry',
-      label: 'Chemistry',
-      handler: onChemistryClick,
-      items: [
-        { label: 'Organic', topic: 'Organic' },
-        { label: 'Inorganic', topic: 'Inorganic' },
-        { label: 'Physical', topic: 'Physical' },
-        { label: 'All Chemistry', topic: null },
-      ],
-    },
-    {
-      key: 'biology',
-      label: 'Biology',
-      handler: onBiologyClick,
-      items: [
-        { label: 'Cellular', topic: 'Cellular' },
-        { label: 'Genetics', topic: 'Genetics' },
-        { label: 'Ecology', topic: 'Ecology' },
-        { label: 'All Biology', topic: null },
-      ],
-    },
-  ];
+  const navSubjects = useMemo(() => {
+    return subjects.map((s) => {
+      const key = s.name.toLowerCase();
+      const subjectTopics = topicsBySubject[s.id] || [];
+      return {
+        key,
+        label: s.name,
+        items: [
+          ...subjectTopics.map((t) => ({
+            label: t.name,
+            topic: t.name,
+          })),
+          { label: `All ${s.name}`, topic: null },
+        ],
+      };
+    });
+  }, [subjects, topicsBySubject]);
 
-  // Suggestions filtering (limit to 5)
   const suggestions = useMemo(() => {
     if (!searchQuery || !searchQuery.trim()) return [];
     return simulations
@@ -70,7 +45,6 @@ export function Navigation({
       .slice(0, 5);
   }, [simulations, searchQuery]);
 
-  // Click outside suggestions container handler
   useEffect(() => {
     function handleClickOutside(event) {
       if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
@@ -81,19 +55,18 @@ export function Navigation({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Build desktop dropdown items with onClick handlers
   const buildDesktopItems = (subject) =>
     subject.items.map((item) => ({
       ...item,
-      onClick: () => subject.handler(item.topic),
+      onClick: () => onSubjectClick(subject.key, item.topic),
     }));
 
   const handleMobileSubjectClick = (subjectKey) => {
     setExpandedSubject(expandedSubject === subjectKey ? null : subjectKey);
   };
 
-  const handleMobileTopicClick = (handler, topic) => {
-    handler(topic);
+  const handleMobileTopicClick = (subjectKey, topic) => {
+    onSubjectClick(subjectKey, topic);
     setMobileMenuOpen(false);
     setExpandedSubject(null);
   };
@@ -105,9 +78,8 @@ export function Navigation({
         <span className="navigation__brand">Science Simulation</span>
       </div>
 
-      {/* Desktop menu (hidden on mobile via CSS) */}
       <div className="navigation__menu">
-        {subjects.map((subject) => (
+        {navSubjects.map((subject) => (
           <NavDropdown
             key={subject.key}
             label={subject.label}
@@ -140,12 +112,12 @@ export function Navigation({
                     onClick={() => {
                       onSimulationSelect(sim);
                       setShowSuggestions(false);
-                      onSearchChange(''); // Reset search text after clicking
+                      onSearchChange('');
                     }}
                   >
                     <span className="navigation__search-suggestion-title">{sim.title}</span>
                     <span className="navigation__search-suggestion-subject">
-                      {sim.Subject?.name || SUBJECT_ID_MAP[sim.subject_id] || 'Science'}
+                      {sim.Subject?.name || ''}
                     </span>
                   </button>
                 </li>
@@ -167,10 +139,10 @@ export function Navigation({
       </div>
 
       <div className={`navigation__mobile-menu ${mobileMenuOpen ? 'navigation__mobile-menu--open' : ''}`}>
-        {subjects.map((subject) => (
+        {navSubjects.map((subject) => (
           <div
             key={subject.key}
-            className={`navigation__mobile-item navigation__mobile-item--${subject.key} ${
+            className={`navigation__mobile-item ${
               activeFilter === subject.key ? 'navigation__mobile-item--active' : ''
             } ${expandedSubject === subject.key ? 'navigation__mobile-item--expanded' : ''}`}
           >
@@ -186,7 +158,7 @@ export function Navigation({
                 <button
                   key={item.label}
                   className="navigation__mobile-subitem"
-                  onClick={() => handleMobileTopicClick(subject.handler, item.topic)}
+                  onClick={() => handleMobileTopicClick(subject.key, item.topic)}
                 >
                   {item.label}
                 </button>

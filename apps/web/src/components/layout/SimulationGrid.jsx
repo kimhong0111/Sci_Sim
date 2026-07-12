@@ -7,12 +7,14 @@ export function SimulationGrid({
   onSimulationSelect,
   activeFilter,
   onFilterChange,
+  subjects,
 }) {
   return (
     <main className="simulation-grid">
       <FilterBar
         activeFilter={activeFilter}
         onFilterChange={onFilterChange}
+        subjects={subjects}
       />
 
       {simulations.length === 0 ? (

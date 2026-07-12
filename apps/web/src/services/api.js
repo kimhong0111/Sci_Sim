@@ -57,4 +57,6 @@ export const simulationService = {
   delete: (id) => api.delete(`/simulations/${id}`),
   getSubjects: () => api.get("/subjects").then((r) => r.data),
   getTopics: () => api.get("/topics").then((r) => r.data),
+  createSubject: (name) => api.post("/subjects", { name }).then((r) => r.data),
+  createTopic: (name, subject_id) => api.post("/topics", { name, subject_id }).then((r) => r.data),
 };

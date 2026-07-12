@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import { simulationService } from "../services/api";
@@ -30,8 +30,13 @@ function LoginForm({ onLogin }) {
     }
   };
 
+  const goHome = () => window.location.href = "/";
+
   return (
     <div className="admin-login">
+      <button className="admin-login__back" onClick={goHome}>
+        ← BACK TO HOME
+      </button>
       <div className="admin-login__box">
         <h1 className="admin-login__title">ADMIN</h1>
         <p className="admin-login__subtitle">Authentication Required</p>
@@ -66,6 +71,7 @@ function SimulationForm({ simulation, subjects, topics, onSave, onCancel }) {
   );
   const [sketchKey, setSketchKey] = useState(simulation?.sketch_key || "");
   const [file, setFile] = useState(null);
+  const [thumbnailRemoved, setThumbnailRemoved] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -82,14 +88,16 @@ function SimulationForm({ simulation, subjects, topics, onSave, onCancel }) {
         setSaving(false);
         return;
       }
-      await onSave({
+      const payload = {
         title,
         description,
         subject_id: Number(subjectId),
         topic_id: Number(topicId),
         sketch_key: sketchKey || null,
         Simulation_Config: { parameters: parsed },
-      }, file);
+      };
+      if (thumbnailRemoved) payload.remove_thumbnail = true;
+      await onSave(payload, file);
     } catch (err) {
       setError(err.response?.data?.message || "Save failed");
     } finally {
@@ -101,9 +109,12 @@ function SimulationForm({ simulation, subjects, topics, onSave, onCancel }) {
     <form onSubmit={handleSubmit} className="admin-form" encType="multipart/form-data">
       <h2 className="admin-form__title">{simulation ? "EDIT SIMULATION" : "NEW SIMULATION"}</h2>
 
-      {simulation?.thumbnail_url && (
+      {simulation?.thumbnail_url && !thumbnailRemoved && (
         <div className="admin-form__preview">
           <img src={simulation.thumbnail_url} alt="Current thumbnail" />
+          <button type="button" onClick={() => setThumbnailRemoved(true)} className="admin-form__btn admin-form__btn--danger" style={{ marginTop: '8px' }}>
+            REMOVE THUMBNAIL
+          </button>
         </div>
       )}
 
@@ -165,6 +176,7 @@ function SimulationForm({ simulation, subjects, topics, onSave, onCancel }) {
 
 export default function Admin() {
   const navigate = useNavigate();
+  const formRef = useRef(null);
   const [user, setUser] = useState(authService.getUser);
   const [simulations, setSimulations] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -178,6 +190,18 @@ export default function Admin() {
   const [newAdminPassword, setNewAdminPassword] = useState("");
   const [adminError, setAdminError] = useState(null);
   const [createAdminLoading, setCreateAdminLoading] = useState(false);
+
+  const [showCreateSubject, setShowCreateSubject] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState("");
+  const [subjectError, setSubjectError] = useState(null);
+  const [creatingSubject, setCreatingSubject] = useState(false);
+
+  const [showCreateTopic, setShowCreateTopic] = useState(false);
+  const [newTopicName, setNewTopicName] = useState("");
+  const [newTopicSubjectId, setNewTopicSubjectId] = useState("");
+  const [topicError, setTopicError] = useState(null);
+  const [creatingTopic, setCreatingTopic] = useState(false);
+
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
@@ -203,6 +227,12 @@ export default function Admin() {
   useEffect(() => {
     if (user) fetchAll();
   }, [user, fetchAll]);
+
+  useEffect(() => {
+    if (showCreate || editing) {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showCreate, editing]);
 
   if (!user) return <LoginForm onLogin={(u) => setUser(u)} />;
 
@@ -252,6 +282,39 @@ export default function Admin() {
     setUser(null);
   };
 
+  const handleCreateSubject = async (e) => {
+    e.preventDefault();
+    setSubjectError(null);
+    setCreatingSubject(true);
+    try {
+      const created = await simulationService.createSubject(newSubjectName.trim());
+      setSubjects((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewSubjectName("");
+      setShowCreateSubject(false);
+    } catch (err) {
+      setSubjectError(err.response?.data?.message || "Failed to create subject");
+    } finally {
+      setCreatingSubject(false);
+    }
+  };
+
+  const handleCreateTopic = async (e) => {
+    e.preventDefault();
+    setTopicError(null);
+    setCreatingTopic(true);
+    try {
+      const created = await simulationService.createTopic(newTopicName.trim(), Number(newTopicSubjectId));
+      setTopics((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewTopicName("");
+      setNewTopicSubjectId("");
+      setShowCreateTopic(false);
+    } catch (err) {
+      setTopicError(err.response?.data?.message || "Failed to create topic");
+    } finally {
+      setCreatingTopic(false);
+    }
+  };
+
   return (
     <div className="admin">
       <div className="admin__header">
@@ -263,24 +326,26 @@ export default function Admin() {
         </div>
       </div>
 
-      {showCreate && (
-        <SimulationForm
-          subjects={subjects}
-          topics={topics}
-          onSave={handleCreate}
-          onCancel={() => setShowCreate(false)}
-        />
-      )}
+      <div ref={formRef}>
+        {showCreate && (
+          <SimulationForm
+            subjects={subjects}
+            topics={topics}
+            onSave={handleCreate}
+            onCancel={() => setShowCreate(false)}
+          />
+        )}
 
-      {editing && (
-        <SimulationForm
-          simulation={editing}
-          subjects={subjects}
-          topics={topics}
-          onSave={(data, file) => handleUpdate(editing.id, data, file)}
-          onCancel={() => setEditing(null)}
-        />
-      )}
+        {editing && (
+          <SimulationForm
+            simulation={editing}
+            subjects={subjects}
+            topics={topics}
+            onSave={(data, file) => handleUpdate(editing.id, data, file)}
+            onCancel={() => setEditing(null)}
+          />
+        )}
+      </div>
 
       {/* Admin Management */}
       <div className="admin__toolbar">
@@ -331,6 +396,105 @@ export default function Admin() {
                 <td>{a.id}</td>
                 <td>{a.name}</td>
                 <td>{a.email}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ─── SUBJECTS ─── */}
+      <div className="admin__toolbar">
+        <h2 className="admin__section-title">SUBJECTS ({subjects.length})</h2>
+        <button onClick={() => setShowCreateSubject(!showCreateSubject)} className="admin__btn admin__btn--primary">+ ADD SUBJECT</button>
+      </div>
+
+      {showCreateSubject && (
+        <form onSubmit={handleCreateSubject} className="admin-form">
+          <h2 className="admin-form__title">NEW SUBJECT</h2>
+          <label className="admin-form__field">
+            <span className="admin-form__label">Name</span>
+            <input value={newSubjectName} onChange={(e) => setNewSubjectName(e.target.value)} className="admin-form__input" required />
+          </label>
+          {subjectError && <p className="admin-form__error">{subjectError}</p>}
+          <div className="admin-form__actions">
+            <button type="submit" className="admin-form__btn admin-form__btn--save" disabled={creatingSubject}>
+              {creatingSubject ? "CREATING..." : "CREATE"}
+            </button>
+            <button type="button" onClick={() => setShowCreateSubject(false)} className="admin-form__btn admin-form__btn--cancel">CANCEL</button>
+          </div>
+        </form>
+      )}
+
+      <div className="admin__table-wrapper">
+        <table className="admin__table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+            </tr>
+          </thead>
+          <tbody>
+            {subjects.length === 0 && (
+              <tr><td colSpan={2} className="admin__empty">No subjects found</td></tr>
+            )}
+            {subjects.map((s) => (
+              <tr key={s.id}>
+                <td>{s.id}</td>
+                <td>{s.name}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ─── TOPICS ─── */}
+      <div className="admin__toolbar">
+        <h2 className="admin__section-title">TOPICS ({topics.length})</h2>
+        <button onClick={() => setShowCreateTopic(!showCreateTopic)} className="admin__btn admin__btn--primary">+ ADD TOPIC</button>
+      </div>
+
+      {showCreateTopic && (
+        <form onSubmit={handleCreateTopic} className="admin-form">
+          <h2 className="admin-form__title">NEW TOPIC</h2>
+          <label className="admin-form__field">
+            <span className="admin-form__label">Name</span>
+            <input value={newTopicName} onChange={(e) => setNewTopicName(e.target.value)} className="admin-form__input" required />
+          </label>
+          <label className="admin-form__field">
+            <span className="admin-form__label">Subject</span>
+            <select value={newTopicSubjectId} onChange={(e) => setNewTopicSubjectId(e.target.value)} className="admin-form__select" required>
+              <option value="">-- Select --</option>
+              {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </label>
+          {topicError && <p className="admin-form__error">{topicError}</p>}
+          <div className="admin-form__actions">
+            <button type="submit" className="admin-form__btn admin-form__btn--save" disabled={creatingTopic}>
+              {creatingTopic ? "CREATING..." : "CREATE"}
+            </button>
+            <button type="button" onClick={() => setShowCreateTopic(false)} className="admin-form__btn admin-form__btn--cancel">CANCEL</button>
+          </div>
+        </form>
+      )}
+
+      <div className="admin__table-wrapper">
+        <table className="admin__table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Subject</th>
+            </tr>
+          </thead>
+          <tbody>
+            {topics.length === 0 && (
+              <tr><td colSpan={3} className="admin__empty">No topics found</td></tr>
+            )}
+            {topics.map((t) => (
+              <tr key={t.id}>
+                <td>{t.id}</td>
+                <td>{t.name}</td>
+                <td>{subjects.find((s) => s.id === t.subject_id)?.name || t.subject_id}</td>
               </tr>
             ))}
           </tbody>

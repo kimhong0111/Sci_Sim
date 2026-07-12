@@ -56,7 +56,9 @@ export async function updateExistingSimulation(req, res) {
   const { id } = req.params;
   try {
     const filePath = req.file?.path;
-    const data = await repo.updateSimulation(id, req.body, filePath);
+    const removeThumbnail = req.body.remove_thumbnail === "true" || req.body.remove_thumbnail === true;
+    delete req.body.remove_thumbnail;
+    const data = await repo.updateSimulation(id, req.body, filePath, removeThumbnail);
     if (!data) {
       return res
         .status(404)

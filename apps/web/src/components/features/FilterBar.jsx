@@ -1,14 +1,15 @@
 import React from 'react';
 import { FilterChip } from '../ui/FilterChip';
 
-const FILTERS = [
-  { label: 'ALL', value: 'all' },
-  { label: 'PHYSICS', value: 'physics' },
-  { label: 'CHEMISTRY', value: 'chemistry' },
-  { label: 'BIOLOGY', value: 'biology' },
-];
+export function FilterBar({ activeFilter, onFilterChange, subjects = [] }) {
+  const filters = [
+    { label: 'ALL', value: 'all' },
+    ...subjects.map((s) => ({
+      label: s.name.toUpperCase(),
+      value: s.name.toLowerCase(),
+    })),
+  ];
 
-export function FilterBar({ activeFilter, onFilterChange }) {
   const activeLabel = activeFilter === 'all'
     ? 'All Modules'
     : activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1);
@@ -22,7 +23,7 @@ export function FilterBar({ activeFilter, onFilterChange }) {
         </p>
       </div>
       <div className="filter-bar__chips">
-        {FILTERS.map((f) => (
+        {filters.map((f) => (
           <FilterChip
             key={f.value}
             label={f.label}

@@ -5,17 +5,13 @@ import { SimulationGrid } from '../components/layout/SimulationGrid';
 import { DetailOverlay } from '../components/layout/DetailOverlay';
 import { Footer } from '../components/layout/Footer';
 import { useSimulations } from '../hooks/useSimulations';
-
-// Maps category filter string to subject_id from the real API
-const CATEGORY_TO_SUBJECT_ID = {
-  physics: 1,
-  chemistry: 2,
-  biology: 3,
-};
+import { simulationService } from '../services/api';
 
 export default function SimulationHub() {
   const { simulations, loading, error } = useSimulations();
 
+  const [subjects, setSubjects] = useState([]);
+  const [topics, setTopics] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeSubFilter, setActiveSubFilter] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,14 +20,40 @@ export default function SimulationHub() {
 
   const gridRef = useRef(null);
 
-  // Computed filtered list using real API's subject_id and search query
+  useEffect(() => {
+    Promise.all([
+      simulationService.getSubjects(),
+      simulationService.getTopics(),
+    ]).then(([subs, tops]) => {
+      setSubjects(Array.isArray(subs) ? subs : []);
+      setTopics(Array.isArray(tops) ? tops : []);
+    }).catch(() => {});
+  }, []);
+
+  const subjectKeyToId = useMemo(() => {
+    const map = {};
+    subjects.forEach((s) => {
+      map[s.name.toLowerCase()] = s.id;
+    });
+    return map;
+  }, [subjects]);
+
+  const topicsBySubject = useMemo(() => {
+    const map = {};
+    topics.forEach((t) => {
+      if (!map[t.subject_id]) map[t.subject_id] = [];
+      map[t.subject_id].push(t);
+    });
+    return map;
+  }, [topics]);
+
   const filteredSimulations = useMemo(() => {
     return simulations.filter((sim) => {
+      const subjectId = subjectKeyToId[activeFilter];
       const matchesCategory =
         activeFilter === 'all' ||
-        sim.subject_id === CATEGORY_TO_SUBJECT_ID[activeFilter];
+        sim.subject_id === subjectId;
 
-      // Topic sub-filter: match Topic.name if provided
       const matchesTopic =
         !activeSubFilter || sim.Topic?.name === activeSubFilter;
 
@@ -42,12 +64,16 @@ export default function SimulationHub() {
 
       return matchesCategory && matchesTopic && matchesSearch;
     });
-  }, [simulations, activeFilter, activeSubFilter, searchQuery]);
+  }, [simulations, activeFilter, activeSubFilter, searchQuery, subjectKeyToId]);
 
-  // Handlers
   const handleFilterChange = (filter, subFilter = null) => {
     setActiveFilter(filter);
     setActiveSubFilter(subFilter);
+  };
+
+  const handleSubjectClick = (subjectKey, topic) => {
+    handleFilterChange(subjectKey, topic);
+    gridRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSimulationSelect = (simulation) => {
@@ -64,23 +90,6 @@ export default function SimulationHub() {
     gridRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Nav subject handlers — set filter + optional topic sub-filter
-  const handlePhysicsClick = (topic) => {
-    handleFilterChange('physics', topic);
-    gridRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleChemistryClick = (topic) => {
-    handleFilterChange('chemistry', topic);
-    gridRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleBiologyClick = (topic) => {
-    handleFilterChange('biology', topic);
-    gridRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Lock body scroll when overlay is open
   useEffect(() => {
     document.body.style.overflow = detailOpen ? 'hidden' : '';
     return () => {
@@ -91,9 +100,9 @@ export default function SimulationHub() {
   return (
     <div className="simulation-hub">
       <Navigation
-        onPhysicsClick={handlePhysicsClick}
-        onChemistryClick={handleChemistryClick}
-        onBiologyClick={handleBiologyClick}
+        subjects={subjects}
+        topicsBySubject={topicsBySubject}
+        onSubjectClick={handleSubjectClick}
         activeFilter={activeFilter}
         activeSubFilter={activeSubFilter}
         searchQuery={searchQuery}
@@ -120,8 +129,8 @@ export default function SimulationHub() {
             simulations={filteredSimulations}
             onSimulationSelect={handleSimulationSelect}
             activeFilter={activeFilter}
-            activeSubFilter={activeSubFilter}
             onFilterChange={handleFilterChange}
+            subjects={subjects}
           />
         )}
       </div>

@@ -61,7 +61,7 @@ export async function createSimulation(data, filePath) {
   return fetchSimulationByIdAndTransform(simulation.id);
 }
 
-export async function updateSimulation(id, data, filePath) {
+export async function updateSimulation(id, data, filePath, removeThumbnail) {
   const simulation = await Simulation.findByPk(id);
   if (!simulation) return null;
   if (filePath) {
@@ -69,6 +69,11 @@ export async function updateSimulation(id, data, filePath) {
       await deleteFromCloudinary(simulation.thumbnail_url);
     }
     data.thumbnail_url = await uploadToCloudinary(filePath);
+  } else if (removeThumbnail) {
+    if (simulation.thumbnail_url) {
+      await deleteFromCloudinary(simulation.thumbnail_url);
+    }
+    data.thumbnail_url = null;
   }
   const configData = data.Simulation_Config;
   delete data.Simulation_Config;

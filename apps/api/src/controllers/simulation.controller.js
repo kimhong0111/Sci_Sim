@@ -1,10 +1,4 @@
-import {
-  fetchSimulationAndTransform,
-  fetchSimulationByIdAndTransform,
-  createSimulation,
-  updateSimulation,
-  deleteSimulation,
-} from "../repository/simulation.repo.js";
+import * as repo from "../repository/simulation.repo.js"
 
 function createResponseMessage(success, message) {
   return { success, message };
@@ -12,7 +6,7 @@ function createResponseMessage(success, message) {
 
 export async function getAllSimulation(req, res) {
   try {
-    const data = await fetchSimulationAndTransform();
+    const data = await repo.fetchSimulationAndTransform();
     if (!data || data.length === 0) {
       return res
         .status(404)
@@ -30,7 +24,7 @@ export async function getAllSimulation(req, res) {
 export async function getSimulationById(req, res) {
   const { id } = req.params;
   try {
-    const data = await fetchSimulationByIdAndTransform(id);
+    const data = await repo.fetchSimulationByIdAndTransform(id);
     if (!data) {
       return res
         .status(404)
@@ -47,7 +41,8 @@ export async function getSimulationById(req, res) {
 
 export async function createNewSimulation(req, res) {
   try {
-    const data = await createSimulation(req.body);
+    const filePath = req.file?.path;
+    const data = await repo.createSimulation(req.body, filePath);
     return res.status(201).json(data);
   } catch (err) {
     console.error("[createNewSimulation]", err);
@@ -60,7 +55,8 @@ export async function createNewSimulation(req, res) {
 export async function updateExistingSimulation(req, res) {
   const { id } = req.params;
   try {
-    const data = await updateSimulation(id, req.body);
+    const filePath = req.file?.path;
+    const data = await repo.updateSimulation(id, req.body, filePath);
     if (!data) {
       return res
         .status(404)
@@ -78,7 +74,7 @@ export async function updateExistingSimulation(req, res) {
 export async function removeSimulation(req, res) {
   const { id } = req.params;
   try {
-    const deleted = await deleteSimulation(id);
+    const deleted = await repo.deleteSimulation(id);
     if (!deleted) {
       return res
         .status(404)

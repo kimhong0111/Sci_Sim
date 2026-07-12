@@ -25,7 +25,11 @@ export function SimulationCard({ simulation, onOpen }) {
       onClick={() => onOpen(simulation)}
     >
       <div className="simulation-card__image-wrapper">
-        <div className="simulation-card__image-placeholder" />
+        {simulation.thumbnail_url ? (
+          <img src={simulation.thumbnail_url} alt={simulation.title} className="simulation-card__image" />
+        ) : (
+          <div className="simulation-card__image-placeholder" />
+        )}
         <Badge label={categoryLabel} variant="category" />
       </div>
       <div className="simulation-card__body">

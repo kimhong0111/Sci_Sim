@@ -11,7 +11,11 @@ export function DetailImage({ simulation, onBack }) {
 
   return (
     <div className="detail-image" data-subject={subjectKey} style={{ minHeight: '300px' }}>
-      <div className="detail-image__overlay" />
+      {simulation?.thumbnail_url ? (
+        <img src={simulation.thumbnail_url} alt={simulation.title} className="detail-image__img" />
+      ) : (
+        <div className="detail-image__overlay" />
+      )}
       <div className="detail-image__back">
         <button
           onClick={onBack}

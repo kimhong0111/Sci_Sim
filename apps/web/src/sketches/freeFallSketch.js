@@ -1,4 +1,8 @@
-export function freeFallSketch(p, configRef) {
+export const sketchKey = "freeFall";
+export const sketchLabel = "Free Fall";
+export const sketch = freeFallSketch;
+
+function freeFallSketch(p, configRef) {
     let x = 300;
     let y = 50;
     let vx = 0;

@@ -22,13 +22,14 @@ CREATE TABLE topics (
 
 -- Simulations linked to a subject and topic
 CREATE TABLE simulations (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  subject_id  INT NOT NULL,
-  topic_id    INT NOT NULL,
-  title       VARCHAR(255) NOT NULL,
-  description TEXT,
-  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  id             INT AUTO_INCREMENT PRIMARY KEY,
+  subject_id     INT NOT NULL,
+  topic_id       INT NOT NULL,
+  title          VARCHAR(255) NOT NULL,
+  description    TEXT,
+  thumbnail_url  VARCHAR(500),
+  created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
   FOREIGN KEY (topic_id)   REFERENCES topics(id)   ON DELETE CASCADE
 );

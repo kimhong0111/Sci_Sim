@@ -1,5 +1,8 @@
 import express from "express";
 import simulationRoutes from "./routes/simulation.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import subjectRoutes from "./routes/subject.routes.js";
+import topicRoutes from "./routes/topic.routes.js";
 
 import cors from "cors";
 
@@ -12,6 +15,9 @@ app.use(express.json());
 
 // Routes
 app.use("/api/simulations", simulationRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/topics", topicRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

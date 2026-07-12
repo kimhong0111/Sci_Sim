@@ -1,4 +1,8 @@
-export function projectileMotionSketch(p, configRef) {
+export const sketchKey = "projectileMotion";
+export const sketchLabel = "Projectile Motion";
+export const sketch = projectileMotionSketch;
+
+function projectileMotionSketch(p, configRef) {
     let launched = false;
     let finished = false;
     let paused = false;

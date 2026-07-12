@@ -37,7 +37,7 @@ export default function SimView() {
         <div className="sim-view__status">Simulation not found</div>
     );
 
-    const sketchFn = sketchRegistry[simulation.id];
+    const sketchFn = sketchRegistry[simulation.sketch_key];
     const parameters = simulation.Simulation_Config?.parameters;
 
     return (

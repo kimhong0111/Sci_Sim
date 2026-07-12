@@ -1,13 +1,11 @@
-import { freeFallSketch } from "./freeFallSketch";
-import { projectileMotionSketch } from "./projectileMotionSketch";
-export const sketchRegistry = {
-    1: freeFallSketch,   // Free Fall
-    2: projectileMotionSketch,             // 
-    3: null,             // Wave Interference
-    4: null,             // Ideal Gas Law
-    5: null,             // pH Scale
-    6: null,             // Reaction Rates
-    7: null,             // Cell Division
-    8: null,             // Punnett Square
-    9: null,  
-};
+const modules = import.meta.glob("./*.js", { eager: true });
+
+export const sketchRegistry = {};
+export const availableSketches = [];
+
+for (const [path, mod] of Object.entries(modules)) {
+  if (path === "./index.js") continue;
+  if (!mod.sketch || !mod.sketchKey) continue;
+  sketchRegistry[mod.sketchKey] = mod.sketch;
+  availableSketches.push({ key: mod.sketchKey, label: mod.sketchLabel || mod.sketchKey });
+}

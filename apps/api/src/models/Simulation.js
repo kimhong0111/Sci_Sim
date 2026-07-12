@@ -24,6 +24,12 @@ const Simulation = sequelize.define(
     description: {
       type: DataTypes.TEXT,
     },
+    thumbnail_url: {
+      type: DataTypes.STRING,
+    },
+    sketch_key: {
+      type: DataTypes.STRING,
+    }
   },
   { tableName: "simulations", freezeTableName: true, timestamps: false }
 );

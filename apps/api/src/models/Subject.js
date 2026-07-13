@@ -14,6 +14,10 @@ const Subject = sequelize.define(
       allowNull: false,
       unique: true,
     },
+    created_by: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   },
   { tableName: "subjects", freezeTableName: true, timestamps: false }
 );

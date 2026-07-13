@@ -8,9 +8,7 @@ export async function getAllSimulation(req, res) {
   try {
     const data = await repo.fetchSimulationAndTransform();
     if (!data || data.length === 0) {
-      return res
-        .status(404)
-        .json(createResponseMessage(false, "No Simulation Found"));
+      return res.status(200).json([]);
     }
     return res.status(200).json(data);
   } catch (err) {
@@ -42,6 +40,7 @@ export async function getSimulationById(req, res) {
 export async function createNewSimulation(req, res) {
   try {
     const filePath = req.file?.path;
+    req.body.created_by = req.user.id;
     const data = await repo.createSimulation(req.body, filePath);
     return res.status(201).json(data);
   } catch (err) {

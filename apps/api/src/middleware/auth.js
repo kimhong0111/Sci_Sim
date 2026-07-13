@@ -2,9 +2,9 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "science-sim-secret-key-change-in-production";
 
-export function generateToken(user) {
+export function generateToken(admin) {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: admin.id, email: admin.email },
     JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -26,11 +26,4 @@ export function authenticate(req, res, next) {
   } catch {
     return res.status(401).json({ success: false, message: "Invalid or expired token" });
   }
-}
-
-export function requireAdmin(req, res, next) {
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ success: false, message: "Admin access required" });
-  }
-  next();
 }

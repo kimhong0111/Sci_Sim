@@ -25,7 +25,7 @@ export async function fetchSimulationAndTransform() {
             { model: Topic, attributes: ["name"] },
             { 
                 model: Simulation_Config, 
-                foreignKey: "simulation_id", 
+                foreignKey: "sim_id", 
             },
         ],
     });
@@ -41,7 +41,7 @@ export async function fetchSimulationByIdAndTransform(id) {
             { model: Topic, attributes: ["name"] },
             { 
                 model: Simulation_Config,
-                foreignKey: "simulation_id",  
+                foreignKey: "sim_id",  
             },
         ],
     });
@@ -56,7 +56,8 @@ export async function createSimulation(data, filePath) {
   const simulation = await Simulation.create(data);
   if (configData) {
     const config = typeof configData === "string" ? JSON.parse(configData) : configData;
-    await Simulation_Config.create({ ...config, simulation_id: simulation.id });
+    const parameter = config.parameters || config.parameter || {};
+    await Simulation_Config.create({ sim_id: simulation.id, parameter });
   }
   return fetchSimulationByIdAndTransform(simulation.id);
 }
@@ -80,7 +81,8 @@ export async function updateSimulation(id, data, filePath, removeThumbnail) {
   await simulation.update(data);
   if (configData) {
     const config = typeof configData === "string" ? JSON.parse(configData) : configData;
-    await Simulation_Config.upsert({ ...config, simulation_id: id });
+    const parameter = config.parameters || config.parameter || {};
+    await Simulation_Config.upsert({ sim_id: id, parameter });
   }
   return fetchSimulationByIdAndTransform(id);
 }

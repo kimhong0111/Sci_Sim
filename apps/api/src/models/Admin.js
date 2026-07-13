@@ -1,8 +1,8 @@
 import sequelize from "../config/db.js";
 import { DataTypes } from "sequelize";
 
-const User = sequelize.define(
-  "User",
+const Admin = sequelize.define(
+  "Admin",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -21,17 +21,12 @@ const User = sequelize.define(
         isEmail: true,
       },
     },
-    password_hash: {
+    pass: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    role: {
-      type: DataTypes.ENUM("student", "admin"),
-      allowNull: false,
-      defaultValue: "student",
-    },
   },
-  { tableName: "users", freezeTableName: true, timestamps: false }
+  { tableName: "admin", freezeTableName: true, timestamps: false }
 );
 
-export default User;
+export default Admin;

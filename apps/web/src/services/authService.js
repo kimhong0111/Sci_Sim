@@ -34,6 +34,12 @@ export const authService = {
   me: () => api.get("/auth/me").then((r) => r.data),
   getAdmins: () => api.get("/auth/users").then((r) => r.data),
 
+  changePassword: (oldPassword, newPassword) =>
+    api.put("/auth/password", { oldPassword, newPassword }).then((r) => r.data),
+
+  deleteAdmin: (id) =>
+    api.delete(`/auth/${id}`).then((r) => r.data),
+
   getToken: () => localStorage.getItem("token"),
 
   getUser: () => {

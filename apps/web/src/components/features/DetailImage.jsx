@@ -1,13 +1,7 @@
 import React from 'react';
 
-const SUBJECT_KEY = {
-  1: 'physics',
-  2: 'chemistry',
-  3: 'biology',
-};
-
 export function DetailImage({ simulation, onBack }) {
-  const subjectKey = SUBJECT_KEY[simulation?.subject_id] || 'general';
+  const subjectKey = simulation?.Subject?.name?.toLowerCase() || 'general';
 
   return (
     <div className="detail-image" data-subject={subjectKey} style={{ minHeight: '300px' }}>

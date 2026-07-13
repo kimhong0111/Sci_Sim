@@ -2,6 +2,13 @@ export const sketchKey = "freeFall";
 export const sketchLabel = "Free Fall";
 export const sketch = freeFallSketch;
 
+export const defaultConfig = {
+  gravity: 9.8,
+  windStrength: 0.3,
+  springStiffness: 0.3,
+  objectType: "rubber"
+};
+
 function freeFallSketch(p, configRef) {
     let x = 300;
     let y = 50;
@@ -32,13 +39,16 @@ function freeFallSketch(p, configRef) {
     let ripples = [];
 
     const objectPresets = {
-        bowling: { mass: 5.0, damping: 0.3, airResistance: 0.005, color: { r: 40, g: 40, b: 45 } },
-        rubber: { mass: 1.0, damping: 0.85, airResistance: 0.02, color: { r: 255, g: 60, b: 60 } },
-        feather: { mass: 0.1, damping: 0.1, airResistance: 0.15, color: { r: 240, g: 240, b: 245 } }
+        bowling: { mass: 5.0, damping: 0.3, airResistance: 0.005, color: { r: 40, g: 40, b: 45 }, image: "/assets/objects/bowling.svg" },
+        rubber: { mass: 1.0, damping: 0.85, airResistance: 0.02, color: { r: 255, g: 60, b: 60 }, image: "/assets/objects/rubber.svg" },
+        feather: { mass: 0.1, damping: 0.1, airResistance: 0.15, color: { r: 240, g: 240, b: 245 }, image: "/assets/objects/feather.svg" },
+        metal: { mass: 8.0, damping: 0.1, airResistance: 0.001, color: { r: 192, g: 192, b: 192 }, image: "/assets/objects/metal.svg" },
+        tennis: { mass: 0.3, damping: 0.7, airResistance: 0.05, color: { r: 200, g: 255, b: 50 }, image: "/assets/objects/tennis.svg" },
+        pingpong: { mass: 0.05, damping: 0.5, airResistance: 0.1, color: { r: 255, g: 140, b: 0 }, image: "/assets/objects/pingpong.svg" }
     };
 
     p.setup = () => {
-        p.createCanvas(800, 600);
+        p.createCanvas(1200, 700);
         p.frameRate(60);
         vx = p.random(-2, 2);
     };

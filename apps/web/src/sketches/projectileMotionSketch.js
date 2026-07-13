@@ -2,6 +2,13 @@ export const sketchKey = "projectileMotion";
 export const sketchLabel = "Projectile Motion";
 export const sketch = projectileMotionSketch;
 
+export const defaultConfig = {
+  angle: 45,
+  initialVelocity: 25,
+  gravity: 9.8,
+  showVectors: true
+};
+
 function projectileMotionSketch(p, configRef) {
     let launched = false;
     let finished = false;
@@ -15,9 +22,14 @@ function projectileMotionSketch(p, configRef) {
     let camY = 0;
     let targetCamX = 0;
     let targetCamY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let camStartX = 0;
+    let camStartY = 0;
 
-    const W = 800;
-    const H = 500;
+    const W = 1200;
+    const H = 600;
     const GROUND_Y = H - 60;
     const ORIGIN_X = 80;
     const SCALE = 18;
@@ -74,13 +86,8 @@ function projectileMotionSketch(p, configRef) {
             targetCamY = -(py - H * 0.5);
             camX += (targetCamX - camX) * 0.08;
             camY += (targetCamY - camY) * 0.08;
-        } else if (finished && !paused) {
-            targetCamX = 0;
-            targetCamY = 0;
-            camX += (targetCamX - camX) * 0.03;
-            camY += (targetCamY - camY) * 0.03;
-            if (Math.abs(camX) < 0.5) camX = 0;
-            if (Math.abs(camY) < 0.5) camY = 0;
+            camX = p.constrain(camX, -(WORLD_WIDTH - W), 0);
+            camY = p.constrain(camY, -(H * 10) + H, GROUND_Y);
         }
 
         p.push();
@@ -140,24 +147,42 @@ function projectileMotionSketch(p, configRef) {
 
         // predicted trajectory
         if (!launched) {
-            p.stroke(255, 255, 255, 40);
-            p.strokeWeight(1);
-            p.drawingContext.setLineDash([4, 6]);
             let tx = ORIGIN_X;
             let ty = GROUND_Y;
             let tvx = initialVelocity * Math.cos(launchRad);
             let tvy = -initialVelocity * Math.sin(launchRad);
-            p.beginShape();
-            p.vertex(tx, ty);
             for (let t = 0; t < 600; t++) {
                 tvy += gravity * 0.016;
                 tx += tvx * 0.016 * SCALE;
                 ty += tvy * 0.016 * SCALE;
                 if (ty >= GROUND_Y) break;
-                p.vertex(tx, ty);
+            }
+
+            p.noFill();
+            p.stroke(255, 255, 255, 60);
+            p.strokeWeight(1.5);
+            p.drawingContext.setLineDash([4, 6]);
+            p.beginShape();
+            let sx = ORIGIN_X;
+            let sy = GROUND_Y;
+            let svx = initialVelocity * Math.cos(launchRad);
+            let svy = -initialVelocity * Math.sin(launchRad);
+            p.vertex(sx, sy);
+            for (let t = 0; t < 600; t++) {
+                svy += gravity * 0.016;
+                sx += svx * 0.016 * SCALE;
+                sy += svy * 0.016 * SCALE;
+                if (sy >= GROUND_Y) break;
+                p.vertex(sx, sy);
             }
             p.endShape();
             p.drawingContext.setLineDash([]);
+
+            p.noFill();
+            p.stroke(...ACCENT);
+            p.strokeWeight(1.5);
+            p.arc(ORIGIN_X, GROUND_Y, 50, 50, -launchRad, 0);
+
             p.stroke(255, 255, 100, 80);
             p.strokeWeight(1);
             p.line(tx, GROUND_Y - 10, tx, GROUND_Y + 10);
@@ -379,10 +404,29 @@ function projectileMotionSketch(p, configRef) {
 
         const rbx = W - 80, rby = H - 48, rbw = 60, rbh = 28;
         if (p.mouseX > rbx && p.mouseX < rbx + rbw &&
-            p.mouseY > rby && p.mouseY < rby + rbh) {
+            p.mouseY > rby && p.mouseY < rby + pbh) {
             resetSim();
             return;
         }
+
+        isDragging = true;
+        dragStartX = p.mouseX;
+        dragStartY = p.mouseY;
+        camStartX = camX;
+        camStartY = camY;
+    };
+
+    p.mouseDragged = () => {
+        if (isDragging) {
+            camX = camStartX + (p.mouseX - dragStartX);
+            camY = camStartY + (p.mouseY - dragStartY);
+            camX = p.constrain(camX, -(WORLD_WIDTH - W), 0);
+            camY = p.constrain(camY, -(H * 10) + H, GROUND_Y);
+        }
+    };
+
+    p.mouseReleased = () => {
+        isDragging = false;
     };
 
     resetSim();

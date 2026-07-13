@@ -1,21 +1,9 @@
 import React from 'react';
 import { Badge } from '../ui/Badge';
 
-const SUBJECT_MAP = {
-  1: 'Physics',
-  2: 'Chemistry',
-  3: 'Biology',
-};
-
-const SUBJECT_KEY = {
-  1: 'physics',
-  2: 'chemistry',
-  3: 'biology',
-};
-
 export function SimulationCard({ simulation, onOpen }) {
-  const categoryLabel = SUBJECT_MAP[simulation.subject_id] || simulation.Subject?.name || 'General';
-  const subjectKey = SUBJECT_KEY[simulation.subject_id] || 'general';
+  const categoryLabel = simulation.Subject?.name || 'General';
+  const subjectKey = simulation.Subject?.name?.toLowerCase() || 'general';
   const topicLabel = simulation.Topic?.name || '';
 
   return (

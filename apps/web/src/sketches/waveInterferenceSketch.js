@@ -4,7 +4,7 @@ export const sketch = waveInterferenceSketch;
 
 function waveInterferenceSketch(p, configRef) {
   p.setup = () => {
-    p.createCanvas(600, 400);
+    p.createCanvas(1200, 600);
   };
   p.draw = () => {
     p.background(0);

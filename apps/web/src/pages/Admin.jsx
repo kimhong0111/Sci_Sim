@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import { simulationService } from "../services/api";
-import { availableSketches } from "../sketches";
+import { availableSketches, sketchRegistry } from "../sketches";
 
 function LoginForm({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -16,10 +16,6 @@ function LoginForm({ onLogin }) {
     setLoading(true);
     try {
       const data = await authService.login(email, password);
-      if (data.user.role !== "admin") {
-        setError("Admin access only");
-        return;
-      }
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       onLogin(data.user);
@@ -65,8 +61,8 @@ function SimulationForm({ simulation, subjects, topics, onSave, onCancel }) {
   const [subjectId, setSubjectId] = useState(simulation?.subject_id || "");
   const [topicId, setTopicId] = useState(simulation?.topic_id || "");
   const [params, setParams] = useState(
-    simulation?.Simulation_Config?.parameters
-      ? JSON.stringify(simulation.Simulation_Config.parameters, null, 2)
+    simulation?.Simulation_Config?.parameter
+      ? JSON.stringify(simulation.Simulation_Config.parameter, null, 2)
       : "{}"
   );
   const [sketchKey, setSketchKey] = useState(simulation?.sketch_key || "");
@@ -74,6 +70,15 @@ function SimulationForm({ simulation, subjects, topics, onSave, onCancel }) {
   const [thumbnailRemoved, setThumbnailRemoved] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (sketchKey && simulation && !simulation.Simulation_Config?.parameter) {
+      const sketch = sketchRegistry[sketchKey];
+      if (sketch?.defaultConfig) {
+        setParams(JSON.stringify(sketch.defaultConfig, null, 2));
+      }
+    }
+  }, [sketchKey]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -191,6 +196,14 @@ export default function Admin() {
   const [adminError, setAdminError] = useState(null);
   const [createAdminLoading, setCreateAdminLoading] = useState(false);
 
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState(null);
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+
+  const isSuperAdmin = user?.id === 1;
+
   const [showCreateSubject, setShowCreateSubject] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
   const [subjectError, setSubjectError] = useState(null);
@@ -252,6 +265,34 @@ export default function Admin() {
       setAdminError(err.response?.data?.message || "Failed to create admin");
     } finally {
       setCreateAdminLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setChangePasswordLoading(true);
+    try {
+      await authService.changePassword(oldPassword, newPassword);
+      setOldPassword("");
+      setNewPassword("");
+      setShowChangePassword(false);
+      alert("Password changed successfully");
+    } catch (err) {
+      setPasswordError(err.response?.data?.message || "Failed to change password");
+    } finally {
+      setChangePasswordLoading(false);
+    }
+  };
+
+  const handleDeleteAdmin = async (id) => {
+    if (!confirm("Delete this admin account?")) return;
+    try {
+      await authService.deleteAdmin(id);
+      const adms = await authService.getAdmins();
+      setAdmins(Array.isArray(adms) ? adms : []);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete admin");
     }
   };
 
@@ -320,7 +361,8 @@ export default function Admin() {
       <div className="admin__header">
         <h1 className="admin__title">ADMIN DASHBOARD</h1>
         <div className="admin__header-right">
-          <span className="admin__user">{user?.name} ({user?.role})</span>
+          <span className="admin__user">{user?.name} {isSuperAdmin && <span className="admin__badge">SUPER-ADMIN</span>}</span>
+          <button onClick={() => setShowChangePassword(!showChangePassword)} className="admin__btn admin__btn--secondary">CHANGE PASSWORD</button>
           <button onClick={() => navigate("/")} className="admin__btn admin__btn--secondary">VIEW SITE</button>
           <button onClick={handleLogout} className="admin__btn admin__btn--danger">LOGOUT</button>
         </div>
@@ -347,60 +389,92 @@ export default function Admin() {
         )}
       </div>
 
-      {/* Admin Management */}
-      <div className="admin__toolbar">
-        <h2 className="admin__section-title">ADMINS ({admins.length})</h2>
-        <button onClick={() => setShowCreateAdmin(!showCreateAdmin)} className="admin__btn admin__btn--primary">+ ADD ADMIN</button>
-      </div>
-
-      {showCreateAdmin && (
-        <form onSubmit={handleCreateAdmin} className="admin-form">
-          <h2 className="admin-form__title">NEW ADMIN</h2>
+      {/* Change Password */}
+      {showChangePassword && (
+        <form onSubmit={handleChangePassword} className="admin-form">
+          <h2 className="admin-form__title">CHANGE PASSWORD</h2>
           <label className="admin-form__field">
-            <span className="admin-form__label">Name</span>
-            <input value={newAdminName} onChange={(e) => setNewAdminName(e.target.value)} className="admin-form__input" required />
+            <span className="admin-form__label">Current Password</span>
+            <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className="admin-form__input" required />
           </label>
           <label className="admin-form__field">
-            <span className="admin-form__label">Email</span>
-            <input type="email" value={newAdminEmail} onChange={(e) => setNewAdminEmail(e.target.value)} className="admin-form__input" required />
+            <span className="admin-form__label">New Password</span>
+            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="admin-form__input" required minLength={6} />
           </label>
-          <label className="admin-form__field">
-            <span className="admin-form__label">Password</span>
-            <input type="password" value={newAdminPassword} onChange={(e) => setNewAdminPassword(e.target.value)} className="admin-form__input" required minLength={6} />
-          </label>
-          {adminError && <p className="admin-form__error">{adminError}</p>}
+          {passwordError && <p className="admin-form__error">{passwordError}</p>}
           <div className="admin-form__actions">
-            <button type="submit" className="admin-form__btn admin-form__btn--save" disabled={createAdminLoading}>
-              {createAdminLoading ? <span className="admin-login__spinner" /> : "CREATE"}
+            <button type="submit" className="admin-form__btn admin-form__btn--save" disabled={changePasswordLoading}>
+              {changePasswordLoading ? <span className="admin-login__spinner" /> : "UPDATE"}
             </button>
-            <button type="button" onClick={() => setShowCreateAdmin(false)} className="admin-form__btn admin-form__btn--cancel">CANCEL</button>
+            <button type="button" onClick={() => setShowChangePassword(false)} className="admin-form__btn admin-form__btn--cancel">CANCEL</button>
           </div>
         </form>
       )}
 
-      <div className="admin__table-wrapper" style={{ marginBottom: "1.5rem" }}>
-        <table className="admin__table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            {admins.length === 0 && (
-              <tr><td colSpan={3} className="admin__empty">No admins found</td></tr>
-            )}
-            {admins.map((a) => (
-              <tr key={a.id}>
-                <td>{a.id}</td>
-                <td>{a.name}</td>
-                <td>{a.email}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Admin Management (super-admin only) */}
+      {isSuperAdmin && (
+        <>
+          <div className="admin__toolbar">
+            <h2 className="admin__section-title">ADMINS ({admins.length})</h2>
+            <button onClick={() => setShowCreateAdmin(!showCreateAdmin)} className="admin__btn admin__btn--primary">+ ADD ADMIN</button>
+          </div>
+
+          {showCreateAdmin && (
+            <form onSubmit={handleCreateAdmin} className="admin-form">
+              <h2 className="admin-form__title">NEW ADMIN</h2>
+              <label className="admin-form__field">
+                <span className="admin-form__label">Name</span>
+                <input value={newAdminName} onChange={(e) => setNewAdminName(e.target.value)} className="admin-form__input" required />
+              </label>
+              <label className="admin-form__field">
+                <span className="admin-form__label">Email</span>
+                <input type="email" value={newAdminEmail} onChange={(e) => setNewAdminEmail(e.target.value)} className="admin-form__input" required />
+              </label>
+              <label className="admin-form__field">
+                <span className="admin-form__label">Password</span>
+                <input type="password" value={newAdminPassword} onChange={(e) => setNewAdminPassword(e.target.value)} className="admin-form__input" required minLength={6} />
+              </label>
+              {adminError && <p className="admin-form__error">{adminError}</p>}
+              <div className="admin-form__actions">
+                <button type="submit" className="admin-form__btn admin-form__btn--save" disabled={createAdminLoading}>
+                  {createAdminLoading ? <span className="admin-login__spinner" /> : "CREATE"}
+                </button>
+                <button type="button" onClick={() => setShowCreateAdmin(false)} className="admin-form__btn admin-form__btn--cancel">CANCEL</button>
+              </div>
+            </form>
+          )}
+
+          <div className="admin__table-wrapper" style={{ marginBottom: "1.5rem" }}>
+            <table className="admin__table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {admins.length === 0 && (
+                  <tr><td colSpan={4} className="admin__empty">No admins found</td></tr>
+                )}
+                {admins.map((a) => (
+                  <tr key={a.id}>
+                    <td>{a.id}</td>
+                    <td>{a.name}</td>
+                    <td>{a.email}</td>
+                    <td className="admin__actions">
+                      {a.id !== 1 && (
+                        <button onClick={() => handleDeleteAdmin(a.id)} className="admin__btn admin__btn--small admin__btn--danger">DELETE</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {/* ─── SUBJECTS ─── */}
       <div className="admin__toolbar">

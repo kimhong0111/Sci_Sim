@@ -19,7 +19,7 @@ export async function createTopic(req, res) {
     if (!subject_id) {
       return res.status(400).json({ message: "subject_id is required" });
     }
-    const topic = await Topic.create({ name: name.trim(), subject_id });
+    const topic = await Topic.create({ name: name.trim(), subject_id, created_by: req.user.id });
     return res.status(201).json(topic);
   } catch (err) {
     console.error("[createTopic]", err);

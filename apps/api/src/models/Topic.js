@@ -17,6 +17,10 @@ const Topic = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    created_by: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   },
   { tableName: "topics", freezeTableName: true, timestamps: false }
 );

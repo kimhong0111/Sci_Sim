@@ -9,17 +9,17 @@ const Simulation_Config = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    simulation_id: {
+    sim_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       unique: true,
     },
-    parameters: {
+    parameter: {
       type: DataTypes.JSON,
       allowNull: false,
     },
   },
-  { tableName: "simulation_configs", freezeTableName: true, timestamps: false }
+  { tableName: "sim_config", freezeTableName: true, timestamps: false }
 );
 
 export default Simulation_Config;

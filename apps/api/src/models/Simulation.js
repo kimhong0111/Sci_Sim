@@ -9,14 +9,6 @@ const Simulation = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    subject_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    topic_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
     title: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -29,7 +21,19 @@ const Simulation = sequelize.define(
     },
     sketch_key: {
       type: DataTypes.STRING,
-    }
+    },
+    topic_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    subject_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    created_by: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   },
   { tableName: "simulations", freezeTableName: true, timestamps: false }
 );

@@ -27,10 +27,16 @@ export default function SimView() {
       .getById(id)
       .then((res) => {
         setSimulation(res);
-        if (res.Simulation_Config?.parameters) {
-          const params = res.Simulation_Config.parameters;
+        if (res.Simulation_Config?.parameter) {
+          const params = res.Simulation_Config.parameter;
           initialConfigRef.current = { ...params };
           setConfig(params);
+        } else {
+          const sketch = sketchRegistry[res.sketch_key];
+          if (sketch?.defaultConfig) {
+            initialConfigRef.current = { ...sketch.defaultConfig };
+            setConfig(sketch.defaultConfig);
+          }
         }
       })
       .catch((err) => setError(err.message))
@@ -62,8 +68,8 @@ export default function SimView() {
   if (!simulation)
     return <div className="sim-view__status">Simulation not found</div>;
 
-  const sketchFn = sketchRegistry[simulation.sketch_key];
-  const parameters = simulation.Simulation_Config?.parameters;
+  const sketchFn = sketchRegistry[simulation.sketch_key]?.sketch;
+  const parameters = simulation.Simulation_Config?.parameter;
 
   return (
     <div className="sim-view">
@@ -108,6 +114,9 @@ export default function SimView() {
                       <option value="bowling">Bowling Ball (Heavy)</option>
                       <option value="rubber">Rubber Ball (Bouncy)</option>
                       <option value="feather">Feather (Light)</option>
+                      <option value="metal">Metal Ball (Dense)</option>
+                      <option value="tennis">Tennis Ball</option>
+                      <option value="pingpong">Ping Pong Ball</option>
                     </select>
                   </label>
                 );

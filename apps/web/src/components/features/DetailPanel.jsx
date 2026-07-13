@@ -3,15 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 
-const SUBJECT_MAP = {
-  1: 'Physics',
-  2: 'Chemistry',
-  3: 'Biology',
-};
-
 export function DetailPanel({ simulation }) {
   const navigate = useNavigate();
-  const categoryLabel = SUBJECT_MAP[simulation.subject_id] || simulation.Subject?.name || 'General';
+  const categoryLabel = simulation.Subject?.name || 'General';
   const topicLabel = simulation.Topic?.name || null;
 
   const handleInitialize = () => {

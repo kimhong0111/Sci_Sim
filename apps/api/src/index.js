@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000
 
 // Middleware
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173" }));
 app.use(express.json({ limit: "1mb" }));
 
 // Routes
@@ -32,7 +32,7 @@ app.use((err, req, res, next) => {
 
 
 // Connect and start server
-  app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+  app.listen(PORT, "0.0.0.0", () => console.log(`API running on http://0.0.0.0:${PORT}`));
 
 
   

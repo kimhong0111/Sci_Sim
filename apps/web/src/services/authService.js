@@ -1,4 +1,5 @@
 import axios from "axios";
+import { cachedFetch, invalidateCache } from "./cache.js";
 
 const api = axios.create({
   baseURL: "/api",
@@ -28,17 +29,22 @@ export const authService = {
   login: (email, password) =>
     api.post("/auth/login", { email, password }).then((r) => r.data),
 
-  register: (name, email, password) =>
-    api.post("/auth/register", { name, email, password }).then((r) => r.data),
+  register: async (name, email, password) => {
+    const result = await api.post("/auth/register", { name, email, password }).then((r) => r.data);
+    invalidateCache("admins");
+    return result;
+  },
 
   me: () => api.get("/auth/me").then((r) => r.data),
-  getAdmins: () => api.get("/auth/users").then((r) => r.data),
+  getAdmins: () => cachedFetch("admins", () => api.get("/auth/users").then((r) => r.data)),
 
   changePassword: (oldPassword, newPassword) =>
     api.put("/auth/password", { oldPassword, newPassword }).then((r) => r.data),
 
-  deleteAdmin: (id) =>
-    api.delete(`/auth/${id}`).then((r) => r.data),
+  deleteAdmin: async (id) => {
+    await api.delete(`/auth/${id}`);
+    invalidateCache("admins");
+  },
 
   getToken: () => localStorage.getItem("token"),
 

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { cachedFetch, invalidateCache } from "./cache.js";
 
 const api = axios.create({
   baseURL: "/api",
@@ -34,29 +35,53 @@ function toFormData(data) {
 }
 
 export const simulationService = {
-  getAll: () => api.get("/simulations").then((r) => r.data),
-  getById: (id) => api.get(`/simulations/${id}`).then((r) => r.data),
-  create: (data) =>
-    api.post("/simulations", data, {
+  getAll: () => cachedFetch("simulations", () => api.get("/simulations").then((r) => r.data)),
+  getById: (id) => cachedFetch(`simulation_${id}`, () => api.get(`/simulations/${id}`).then((r) => r.data)),
+  create: async (data) => {
+    const created = await api.post("/simulations", data, {
       headers: { "Content-Type": "application/json" },
-    }).then((r) => r.data),
-  createWithImage: (data, file) => {
+    }).then((r) => r.data);
+    invalidateCache("simulations");
+    return created;
+  },
+  createWithImage: async (data, file) => {
     const fd = toFormData(data);
     if (file) fd.append("image", file);
-    return api.post("/simulations", fd).then((r) => r.data);
+    const created = await api.post("/simulations", fd).then((r) => r.data);
+    invalidateCache("simulations");
+    return created;
   },
-  update: (id, data) =>
-    api.put(`/simulations/${id}`, data, {
+  update: async (id, data) => {
+    const updated = await api.put(`/simulations/${id}`, data, {
       headers: { "Content-Type": "application/json" },
-    }).then((r) => r.data),
-  updateWithImage: (id, data, file) => {
+    }).then((r) => r.data);
+    invalidateCache("simulations");
+    invalidateCache(`simulation_${id}`);
+    return updated;
+  },
+  updateWithImage: async (id, data, file) => {
     const fd = toFormData(data);
     if (file) fd.append("image", file);
-    return api.put(`/simulations/${id}`, fd).then((r) => r.data);
+    const updated = await api.put(`/simulations/${id}`, fd).then((r) => r.data);
+    invalidateCache("simulations");
+    invalidateCache(`simulation_${id}`);
+    return updated;
   },
-  delete: (id) => api.delete(`/simulations/${id}`),
-  getSubjects: () => api.get("/subjects").then((r) => r.data),
-  getTopics: () => api.get("/topics").then((r) => r.data),
-  createSubject: (name) => api.post("/subjects", { name }).then((r) => r.data),
-  createTopic: (name, subject_id) => api.post("/topics", { name, subject_id }).then((r) => r.data),
+  delete: async (id) => {
+    await api.delete(`/simulations/${id}`);
+    invalidateCache("simulations");
+    invalidateCache(`simulation_${id}`);
+  },
+  getSubjects: () => cachedFetch("subjects", () => api.get("/subjects").then((r) => r.data)),
+  getTopics: () => cachedFetch("topics", () => api.get("/topics").then((r) => r.data)),
+  createSubject: async (name) => {
+    const created = await api.post("/subjects", { name }).then((r) => r.data);
+    invalidateCache("subjects");
+    return created;
+  },
+  createTopic: async (name, subject_id) => {
+    const created = await api.post("/topics", { name, subject_id }).then((r) => r.data);
+    invalidateCache("topics");
+    return created;
+  },
 };

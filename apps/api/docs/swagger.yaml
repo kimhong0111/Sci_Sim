@@ -1,0 +1,763 @@
+openapi: 3.0.3
+info:
+  title: Sci_Sim API
+  description: |
+    Science Simulation Learning Platform API.
+    
+    Allows admins to manage subjects, topics, and interactive simulations.
+    Students can browse and interact with simulations without authentication.
+  version: 1.0.0
+  contact:
+    name: Sci_Sim Team
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://your-domain.com/api
+    description: Production server
+
+tags:
+  - name: Auth
+    description: Authentication and admin management
+  - name: Simulations
+    description: Simulation CRUD operations
+  - name: Subjects
+    description: Subject management
+  - name: Topics
+    description: Topic management
+
+paths:
+  /auth/action-token:
+    post:
+      tags: [Auth]
+      summary: Get action token
+      description: Get a short-lived (30s) token for write operations (create/update/delete)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [create_subject, update_subject, delete_subject, create_topic, update_topic, delete_topic]
+                  example: create_subject
+      responses:
+        '200':
+          description: Action token generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  action_token:
+                    type: string
+                    description: Short-lived JWT (30 seconds)
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Admin login
+      description: Authenticate admin and receive JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new admin
+      description: Only super-admin can create new admin accounts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Admin created successfully
+        '403':
+          description: Only super-admin can create admins
+        '409':
+          description: Email already registered
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current admin info
+      description: Returns the authenticated admin's details
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current admin info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminResponse'
+
+  /auth/users:
+    get:
+      tags: [Auth]
+      summary: List all admins
+      description: Only super-admin can list all admins
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of admins
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Admin'
+        '403':
+          description: Only super-admin can list admins
+
+  /auth/password:
+    put:
+      tags: [Auth]
+      summary: Change password
+      description: Change own password (requires current password)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+        '401':
+          description: Current password incorrect
+
+  /auth/{id}:
+    delete:
+      tags: [Auth]
+      summary: Delete admin account
+      description: Only super-admin can delete admins. Cannot delete super-admin (id=1).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Admin deleted successfully
+        '403':
+          description: Cannot delete super-admin or insufficient permissions
+        '404':
+          description: Admin not found
+
+  /simulations:
+    get:
+      tags: [Simulations]
+      summary: List all simulations
+      description: Public endpoint - no authentication required
+      responses:
+        '200':
+          description: List of simulations with subject, topic, and config
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Simulation'
+
+    post:
+      tags: [Simulations]
+      summary: Create simulation
+      description: Create a new simulation (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulationInput'
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SimulationInput'
+                - type: object
+                  properties:
+                    image:
+                      type: string
+                      format: binary
+                      description: Thumbnail image file
+      responses:
+        '201':
+          description: Simulation created successfully
+        '401':
+          description: Authentication required
+
+  /simulations/{id}:
+    get:
+      tags: [Simulations]
+      summary: Get simulation by ID
+      description: Public endpoint - returns simulation with subject, topic, and config
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Simulation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Simulation'
+        '404':
+          description: Simulation not found
+
+    put:
+      tags: [Simulations]
+      summary: Update simulation
+      description: Update an existing simulation (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulationInput'
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SimulationInput'
+                - type: object
+                  properties:
+                    image:
+                      type: string
+                      format: binary
+                      description: Thumbnail image file
+      responses:
+        '200':
+          description: Simulation updated successfully
+        '404':
+          description: Simulation not found
+
+    delete:
+      tags: [Simulations]
+      summary: Delete simulation
+      description: Delete a simulation and its config (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Simulation deleted successfully
+        '404':
+          description: Simulation not found
+
+  /subjects:
+    get:
+      tags: [Subjects]
+      summary: List all subjects
+      description: Public endpoint
+      responses:
+        '200':
+          description: List of subjects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subject'
+
+    post:
+      tags: [Subjects]
+      summary: Create subject
+      description: Create a new subject (admin only, requires action_token)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectInput'
+      responses:
+        '201':
+          description: Subject created successfully
+        '401':
+          description: Re-authentication required (action_token)
+        '409':
+          description: Subject already exists
+
+  /subjects/{id}:
+    put:
+      tags: [Subjects]
+      summary: Update subject
+      description: Update an existing subject (admin only, requires action_token)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectUpdateInput'
+      responses:
+        '200':
+          description: Subject updated successfully
+        '401':
+          description: Re-authentication required (action_token)
+        '404':
+          description: Subject not found
+        '409':
+          description: Subject name already exists
+
+    delete:
+      tags: [Subjects]
+      summary: Delete subject
+      description: Delete a subject and its cascaded topics/simulations (admin only, requires action_token)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionTokenInput'
+      responses:
+        '200':
+          description: Subject deleted successfully
+        '401':
+          description: Re-authentication required (action_token)
+        '404':
+          description: Subject not found
+
+  /topics:
+    get:
+      tags: [Topics]
+      summary: List all topics
+      description: Public endpoint
+      responses:
+        '200':
+          description: List of topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+
+    post:
+      tags: [Topics]
+      summary: Create topic
+      description: Create a new topic under a subject (admin only, requires action_token)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicInput'
+      responses:
+        '201':
+          description: Topic created successfully
+        '400':
+          description: subject_id is required
+        '401':
+          description: Re-authentication required (action_token)
+
+  /topics/{id}:
+    put:
+      tags: [Topics]
+      summary: Update topic
+      description: Update an existing topic (admin only, requires action_token)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicUpdateInput'
+      responses:
+        '200':
+          description: Topic updated successfully
+        '401':
+          description: Re-authentication required (action_token)
+        '404':
+          description: Topic not found
+
+    delete:
+      tags: [Topics]
+      summary: Delete topic
+      description: Delete a topic and its cascaded simulations (admin only, requires action_token)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionTokenInput'
+      responses:
+        '200':
+          description: Topic deleted successfully
+        '401':
+          description: Re-authentication required (action_token)
+        '404':
+          description: Topic not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@sci-sim.com
+        password:
+          type: string
+          format: password
+          example: admin12345
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        token:
+          type: string
+          description: JWT token (expires in 7 days)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: '#/components/schemas/Admin'
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john@school.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: password123
+
+    ChangePasswordRequest:
+      type: object
+      required: [oldPassword, newPassword]
+      properties:
+        oldPassword:
+          type: string
+          format: password
+          example: oldpassword123
+        newPassword:
+          type: string
+          format: password
+          minLength: 6
+          example: newpassword456
+
+    Admin:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Main Admin
+        email:
+          type: string
+          format: email
+          example: admin@sci-sim.com
+        created_at:
+          type: string
+          format: date-time
+
+    AdminResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        user:
+          $ref: '#/components/schemas/Admin'
+
+    Subject:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Physics
+        created_by:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+
+    SubjectInput:
+      type: object
+      required: [name, action_token]
+      properties:
+        name:
+          type: string
+          example: Physics
+        action_token:
+          type: string
+          description: Short-lived token (30s) from /auth/action-token for write operations
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    SubjectUpdateInput:
+      type: object
+      required: [name, action_token]
+      properties:
+        name:
+          type: string
+          example: Physics
+        action_token:
+          type: string
+          description: Short-lived token (30s) from /auth/action-token for write operations
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    Topic:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        subject_id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Mechanics
+        created_by:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+
+    TopicInput:
+      type: object
+      required: [name, subject_id, action_token]
+      properties:
+        name:
+          type: string
+          example: Mechanics
+        subject_id:
+          type: integer
+          example: 1
+        action_token:
+          type: string
+          description: Short-lived token (30s) from /auth/action-token for write operations
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    TopicUpdateInput:
+      type: object
+      required: [name, subject_id, action_token]
+      properties:
+        name:
+          type: string
+          example: Mechanics
+        subject_id:
+          type: integer
+          example: 1
+        action_token:
+          type: string
+          description: Short-lived token (30s) from /auth/action-token for write operations
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    ActionTokenInput:
+      type: object
+      required: [action_token]
+      properties:
+        action_token:
+          type: string
+          description: Short-lived token (30s) from /auth/action-token for delete operations
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    Simulation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Free Fall Simulation
+        description:
+          type: string
+          example: Explore gravity and air resistance
+        thumbnail_url:
+          type: string
+          format: uri
+          example: https://res.cloudinary.com/.../image.png
+        sketch_key:
+          type: string
+          example: freeFall
+        topic_id:
+          type: integer
+          example: 1
+        subject_id:
+          type: integer
+          example: 1
+        created_by:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        Subject:
+          $ref: '#/components/schemas/Subject'
+        Topic:
+          $ref: '#/components/schemas/Topic'
+        Simulation_Config:
+          $ref: '#/components/schemas/SimConfig'
+
+    SimulationInput:
+      type: object
+      required: [title, topic_id, subject_id]
+      properties:
+        title:
+          type: string
+          example: Free Fall Simulation
+        description:
+          type: string
+          example: Explore gravity and air resistance
+        topic_id:
+          type: integer
+          example: 1
+        subject_id:
+          type: integer
+          example: 1
+        sketch_key:
+          type: string
+          example: freeFall
+        Simulation_Config:
+          $ref: '#/components/schemas/SimConfigInput'
+
+    SimConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        sim_id:
+          type: integer
+          example: 1
+        parameter:
+          type: object
+          description: JSON object with simulation parameters
+          example:
+            gravity: 9.8
+            windStrength: 0.3
+            springStiffness: 0.3
+            objectType: rubber
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SimConfigInput:
+      type: object
+      required: [parameter]
+      properties:
+        parameter:
+          type: object
+          description: JSON object with simulation parameters
+          example:
+            gravity: 9.8
+            windStrength: 0.3
+            springStiffness: 0.3
+            objectType: rubber

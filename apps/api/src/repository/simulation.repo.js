@@ -17,9 +17,10 @@ async function deleteFromCloudinary(url) {
 }
 
 
-export async function fetchSimulationAndTransform() {
+export async function fetchSimulationAndTransform(where = {}) {
 
     const simulations = await Simulation.findAll({
+        where,
         include: [
             { model: Subject, attributes: ["name"] },
             { model: Topic, attributes: ["name"] },

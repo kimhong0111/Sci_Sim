@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import simulationRoutes from "./routes/simulation.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import subjectRoutes from "./routes/subject.routes.js";
@@ -10,8 +11,9 @@ const app = express();
 const PORT = process.env.PORT || 3000
 
 // Middleware
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173" }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173", credentials: true }));
 app.use(express.json({ limit: "1mb" }));
+app.use(cookieParser());
 
 // Routes
 app.use("/api/simulations", simulationRoutes);

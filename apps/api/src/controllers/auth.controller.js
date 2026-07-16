@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import { Admin } from "../models/index.js";
-import { generateToken } from "../middleware/auth.js";
+import { generateToken, generateRefreshToken, verifyRefreshToken, generateActionToken, verifyActionToken } from "../middleware/auth.js";
+
+const isProduction = process.env.NODE_ENV === "production";
 
 export async function register(req, res) {
   try {
@@ -8,7 +10,17 @@ export async function register(req, res) {
       return res.status(403).json({ success: false, message: "Only the super-admin can create new admins" });
     }
 
-    const { name, email, password } = req.body;
+    const { name, email, password, action_token } = req.body;
+
+    if (!action_token) {
+      return res.status(401).json({ success: false, message: "Re-authentication required" });
+    }
+
+    try {
+      verifyActionToken(action_token, "create_admin");
+    } catch {
+      return res.status(401).json({ success: false, message: "Re-authentication expired, please try again" });
+    }
 
     const existing = await Admin.findOne({ where: { email } });
     if (existing) {
@@ -19,6 +31,13 @@ export async function register(req, res) {
     const admin = await Admin.create({ name, email, pass });
 
     const token = generateToken(admin);
+    const refreshToken = generateRefreshToken(admin);
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "strict" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
     return res.status(201).json({
       success: true,
       token,
@@ -26,6 +45,36 @@ export async function register(req, res) {
     });
   } catch (err) {
     console.error("[register]", err);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
+export async function verifyPassword(req, res) {
+  try {
+    const { password, action } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ success: false, message: "Password is required" });
+    }
+
+    if (!action) {
+      return res.status(400).json({ success: false, message: "Action is required" });
+    }
+
+    const admin = await Admin.findByPk(req.user.id);
+    if (!admin) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    const valid = await bcrypt.compare(password, admin.pass);
+    if (!valid) {
+      return res.status(401).json({ success: false, message: "Incorrect password" });
+    }
+
+    const action_token = generateActionToken(admin, action);
+    return res.status(200).json({ success: true, action_token });
+  } catch (err) {
+    console.error("[verifyPassword]", err);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
@@ -45,6 +94,13 @@ export async function login(req, res) {
     }
 
     const token = generateToken(admin);
+    const refreshToken = generateRefreshToken(admin);
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "strict" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
     return res.status(200).json({
       success: true,
       token,
@@ -122,6 +178,17 @@ export async function deleteAdmin(req, res) {
       return res.status(403).json({ success: false, message: "Only the super-admin can delete admins" });
     }
 
+    const { action_token } = req.body;
+    if (!action_token) {
+      return res.status(401).json({ success: false, message: "Re-authentication required" });
+    }
+
+    try {
+      verifyActionToken(action_token, "delete_admin");
+    } catch {
+      return res.status(401).json({ success: false, message: "Re-authentication expired, please try again" });
+    }
+
     const targetId = parseInt(req.params.id, 10);
     if (targetId === 1) {
       return res.status(403).json({ success: false, message: "Cannot delete the super-admin account" });
@@ -138,4 +205,38 @@ export async function deleteAdmin(req, res) {
     console.error("[deleteAdmin]", err);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
+}
+
+export async function refresh(req, res) {
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ success: false, message: "No refresh token" });
+    }
+
+    let payload;
+    try {
+      payload = verifyRefreshToken(refreshToken);
+    } catch {
+      res.clearCookie("refreshToken");
+      return res.status(401).json({ success: false, message: "Invalid refresh token" });
+    }
+
+    const admin = await Admin.findByPk(payload.id);
+    if (!admin) {
+      res.clearCookie("refreshToken");
+      return res.status(401).json({ success: false, message: "Admin not found" });
+    }
+
+    const token = generateToken(admin);
+    return res.status(200).json({ success: true, token });
+  } catch (err) {
+    console.error("[refresh]", err);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
+export async function logout(req, res) {
+  res.clearCookie("refreshToken");
+  return res.status(200).json({ success: true, message: "Logged out" });
 }

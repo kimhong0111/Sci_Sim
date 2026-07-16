@@ -5,6 +5,9 @@ import { authenticate } from "../middleware/auth.js";
 const authRoutes = express.Router();
 
 authRoutes.post("/login", authController.login);
+authRoutes.post("/refresh", authController.refresh);
+authRoutes.post("/logout", authController.logout);
+authRoutes.post("/verify-password", authenticate, authController.verifyPassword);
 authRoutes.get("/me", authenticate, authController.me);
 authRoutes.post("/register", authenticate, authController.register);
 authRoutes.get("/users", authenticate, authController.listAdmins);

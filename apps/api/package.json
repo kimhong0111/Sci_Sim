@@ -6,11 +6,17 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "seed": "node src/seed.js",
-    "migrate": "node src/migrate.js"
+    "backup": "node scripts/backup.js",
+    "setup-cron": "bash scripts/setup-cron.sh",
+    "check-cron": "bash scripts/check-cron.sh",
+    "remove-cron": "bash scripts/remove-cron.sh",
+    "deploy": "npm run seed && npm start",
+    "postinstall": "mkdir -p uploads backups logs"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "esbuild": "0.28.1",

@@ -1,4 +1,5 @@
 import * as repo from "../repository/simulation.repo.js"
+import { verifyActionToken } from "../middleware/auth.js";
 
 function createResponseMessage(success, message) {
   return { success, message };
@@ -6,7 +7,11 @@ function createResponseMessage(success, message) {
 
 export async function getAllSimulation(req, res) {
   try {
-    const data = await repo.fetchSimulationAndTransform();
+    const where = {};
+    if (req.query.mine === "true" && req.user) {
+      where.created_by = req.user.id;
+    }
+    const data = await repo.fetchSimulationAndTransform(where);
     if (!data || data.length === 0) {
       return res.status(200).json([]);
     }
@@ -39,8 +44,18 @@ export async function getSimulationById(req, res) {
 
 export async function createNewSimulation(req, res) {
   try {
+    const { action_token } = req.body;
+    if (!action_token) {
+      return res.status(401).json(createResponseMessage(false, "Re-authentication required"));
+    }
+    try {
+      verifyActionToken(action_token, "create_simulation");
+    } catch {
+      return res.status(401).json(createResponseMessage(false, "Re-authentication expired, please try again"));
+    }
     const filePath = req.file?.path;
     req.body.created_by = req.user.id;
+    delete req.body.action_token;
     const data = await repo.createSimulation(req.body, filePath);
     return res.status(201).json(data);
   } catch (err) {
@@ -54,9 +69,19 @@ export async function createNewSimulation(req, res) {
 export async function updateExistingSimulation(req, res) {
   const { id } = req.params;
   try {
+    const { action_token } = req.body;
+    if (!action_token) {
+      return res.status(401).json(createResponseMessage(false, "Re-authentication required"));
+    }
+    try {
+      verifyActionToken(action_token, "update_simulation");
+    } catch {
+      return res.status(401).json(createResponseMessage(false, "Re-authentication expired, please try again"));
+    }
     const filePath = req.file?.path;
     const removeThumbnail = req.body.remove_thumbnail === "true" || req.body.remove_thumbnail === true;
     delete req.body.remove_thumbnail;
+    delete req.body.action_token;
     const data = await repo.updateSimulation(id, req.body, filePath, removeThumbnail);
     if (!data) {
       return res
@@ -75,6 +100,17 @@ export async function updateExistingSimulation(req, res) {
 export async function removeSimulation(req, res) {
   const { id } = req.params;
   try {
+    const { action_token } = req.body;
+    if (!action_token) {
+      return res.status(401).json(createResponseMessage(false, "Re-authentication required"));
+    }
+
+    try {
+      verifyActionToken(action_token, "delete_simulation");
+    } catch {
+      return res.status(401).json(createResponseMessage(false, "Re-authentication expired, please try again"));
+    }
+
     const deleted = await repo.deleteSimulation(id);
     if (!deleted) {
       return res
